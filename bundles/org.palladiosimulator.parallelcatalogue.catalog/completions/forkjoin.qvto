@@ -1,0 +1,251 @@
+import org.palladiosimulator.parallelcatalogue.catalog.black.ProfilesLibrary;
+import org.palladiosimulator.architecturaltemplates.catalog.black.PCMLibrary;
+//import de.uka.ipd.sdq.simucomframework.variables.StackContext;
+
+
+modeltype ECORE uses 'http://www.eclipse.org/emf/2002/Ecore';
+modeltype PCM_CORE uses 'http://palladiosimulator.org/PalladioComponentModel/Core/5.2';
+modeltype PCMSEFF uses pcm::seff('http://palladiosimulator.org/PalladioComponentModel/SEFF/5.2');
+modeltype PCMComposition uses pcm::core::composition('http://palladiosimulator.org/PalladioComponentModel/5.2');
+modeltype PCM_COMPLETION uses 'http://palladiosimulator.org/AnalyzerFramework/Completions/1.0';
+modeltype PCMSEFF_PERFORMANCE uses pcm::seff::seff_performance('http://palladiosimulator.org/PalladioComponentModel/SEFF/5.2');
+modeltype PCM_ALLOC uses 'http://palladiosimulator.org/PalladioComponentModel/Allocation/5.2';
+modeltype PCM_Repository uses 'http://palladiosimulator.org/PalladioComponentModel/Repository/5.2';
+modeltype PCM_RESOURCE uses pcm::resourcetype;
+modeltype STOEX uses stoex;
+modeltype PROBFUNC uses probfunction;
+modeltype pcm_core uses pcm::core::entity;
+modeltype PCM_RES_ENV uses 'http://palladiosimulator.org/PalladioComponentModel/ResourceEnvironment/5.2';
+
+//Inout model is defined and passed from AtCatalog-> role XYZ -> qvto ->pcm blackboard-> pcm file Extension
+transformation ForkJoin(inout pcmRepository : PCM_Repository);
+
+property setOfRes:Set(ParametricResourceDemand);
+property hardcode:ParametricResourceDemand;
+property FORK_JOIN_ACTION_PROFILE : String = "ForkJoinProfile"; //<- change this if profile is renamed 
+property FORK_JOIN_ACTION_STEREOTYPE : String = "ForkedBehaviourStereotype"; //<- change this if steroetype is renamed 
+property THREAD_POOL_SIZE : String = "poolSize";//<- change this if steroetype attribute is renamed 
+property numberOfWorkerThreads : Integer;
+property OVERHEAD : String = "overhead";
+property amountOfOverhead : Real; //TODO change Attributes in emfprofile to real
+property listOfRootObjects : List(NamedElement);
+
+main() {
+		log ("AT Transformation: Fork Join initilized");
+        
+		var repoClasses : Set(Repository) := pcmRepository.rootObjects()[Repository];
+       	var basicComponents : Bag(BasicComponent) := repoClasses.components__Repository[BasicComponent]; 
+       	var resourceDemandingSeffs : Bag(ResourceDemandingSEFF) := basicComponents.serviceEffectSpecifications__BasicComponent[ResourceDemandingSEFF];
+      	var loopActions:Bag(ForkAction) := resourceDemandingSeffs.steps_Behaviour[ForkAction];
+      	var loops=resourceDemandingSeffs.allSubobjects()[ForkAction];
+      	
+		resourceDemandingSeffs->forEach(seff){
+			seff.allSubobjects()->forEach(action){
+				log(action.toString());
+				if(action.oclIsTypeOf(InternalAction)){
+					setOfRes+=action.oclAsType(InternalAction).resourceDemand_Action;
+				};
+			};
+		};
+		
+      	resourceDemandingSeffs ->map ForkActionBeforeToForkActionAfter();
+		
+};
+      	
+mapping inout ResourceDemandingSEFF::ForkActionBeforeToForkActionAfter(){
+	
+	self.steps_Behaviour := replaceOldForkWithNewFork(self.steps_Behaviour);
+}
+helper removeResourceContainer(list : List(ProcessingResourceType)){
+	list->forEach(res){
+		log(res.entityName);
+		delete(listOfRootObjects,res); 
+	};
+}
+
+helper replaceOldForkWithNewFork(oldStepsSet:Set(AbstractAction)):Set(AbstractAction){
+
+	var modifiedStepsSet: Set(AbstractAction);
+	
+	oldStepsSet -> forEach(action){
+		if(action.oclIsTypeOf(ForkAction)){
+			var list:List(ForkedBehaviour);
+			log("SIZEEEEEEEEEEEEEEEEE"+action.oclAsType(ForkAction).synchronisingBehaviours_ForkAction.synchronousForkedBehaviours_SynchronisationPoint->size().toString());
+			action.oclAsType(ForkAction).synchronisingBehaviours_ForkAction.synchronousForkedBehaviours_SynchronisationPoint->forEach(behaviour){
+				if(isProfileApplied(behaviour.oclAsType(EObject),FORK_JOIN_ACTION_PROFILE) and
+					hasAppliedStereotype(behaviour.oclAsType(EObject),FORK_JOIN_ACTION_STEREOTYPE)){
+					list+=behaviour;
+				};
+				
+			
+			};
+			if(list->size()>0){
+					action := new ForkAction(action.oclAsType(ForkAction),list,false);
+			};
+		};
+		
+		modifiedStepsSet += action;
+	};
+	
+	return modifiedStepsSet;
+}
+
+//constructor ForkAction::ForkAction(aFork: PCMSEFF::ForkAction,threadPoolSize : Real,overhead:String, innerTrigger: Boolean) {
+constructor ForkAction::ForkAction(aFork: PCMSEFF::ForkAction,list:List(ForkedBehaviour), innerTrigger: Boolean) {
+       log ("create fork action for loop" + aFork.entityName);
+       
+       if(not innerTrigger){
+	   		predecessor_AbstractAction := aFork.predecessor_AbstractAction;
+       		successor_AbstractAction := aFork.successor_AbstractAction;
+	   }endif;
+	   
+		// pass result~ForkAction bcs we have to set it in the forkAction_SynchronisationPoint Attribute of the SynchronisationPoint 
+       synchronisingBehaviours_ForkAction := new SynchronisationPoint(aFork,result,list);
+}
+constructor SynchronisationPoint::SynchronisationPoint(aForkOld : PCMSEFF::ForkAction,aFork : PCMSEFF::ForkAction,list:List(ForkedBehaviour)){
+      
+       log ("create synchronisation point for loop" + aFork.entityName);
+
+       forkAction_SynchronisationPoint := aFork;
+       
+		//pass result~SynchronisationPoint bcs we have to set it in the synchronisationPoint_ForkedBehaviour Attribute 
+		//of each ForkedBehaviour
+       synchronousForkedBehaviours_SynchronisationPoint := createForkedBehaviorList(aForkOld, aFork, result,list);
+ }
+helper createForkedBehaviorList(aForkOld : ForkAction,aFork : ForkAction, aSyncPoint : SynchronisationPoint,list:List(ForkedBehaviour)) : Set(ForkedBehaviour) {
+
+      var list_return : Set(ForkedBehaviour);
+			
+			list->forEach(behaviour){
+				var threadPoolSize : Real := getDoubleTaggedValue(behaviour.oclAsType(EObject), THREAD_POOL_SIZE, FORK_JOIN_ACTION_STEREOTYPE);
+				var overhead : String := getStringTaggedValue(behaviour.oclAsType(EObject),OVERHEAD,FORK_JOIN_ACTION_STEREOTYPE);
+				var counter1:=1;
+				while(counter1<=threadPoolSize){
+					list_return+=new ForkedBehaviour(aForkOld, aFork, aSyncPoint,overhead,behaviour);
+					counter1:=counter1+1;
+				};
+			};
+			
+			
+             return list_return; 
+
+}
+constructor ForkedBehaviour::ForkedBehaviour(aForkOld : ForkAction,aFork : ForkAction, aSyncPoint : SynchronisationPoint, overhead:String,behaviour:ForkedBehaviour) {
+	
+        log ("create forked behavour for loop" + aForkOld.entityName);
+        forkAction_ForkedBehaivour := aFork;       
+        synchronisationPoint_ForkedBehaviour := aSyncPoint;
+
+        var start : StartAction = new StartAction();
+        start.entityName:="start";
+        var stop : StopAction = new StopAction();
+        stop.entityName:="stop";
+       	
+	    var store:=getFirstActionAfterStart(behaviour);
+		var list:List(AbstractAction);
+		list+=start;
+		
+		var fork_action:AbstractAction;
+        var tempAction:AbstractAction;
+        var setOfResources:Set(ParametricResourceDemand);
+        var counter:=0;
+        while(not store.oclIsTypeOf(StopAction)){
+       		tempAction := store.deepclone();
+       		var actionID:AbstractAction;
+       		tempAction.id:=actionID.id;
+       		list+=tempAction;
+       		store:=store.successor_AbstractAction;
+       		counter:=counter+1;
+       };
+      
+       list+=createOverheadAction(overhead);
+       
+       list+=stop;
+       list := setSuccessorAndPredecessor(list);
+     
+       steps_Behaviour:=list;
+              
+}
+helper getFirstActionAfterStart(behaviour:ForkedBehaviour):AbstractAction{
+	   var store:AbstractAction;
+	   behaviour.steps_Behaviour -> forEach(action){
+	    	if(action.oclIsTypeOf(StartAction) ) then{
+				store:=action;
+			}endif;
+		};  
+	   store:=store.successor_AbstractAction;
+	   return store;
+}
+helper createOverheadAction(overhead:String):InternalAction{
+	    var overhead_action:InternalAction=new InternalAction();
+        overhead_action.entityName:='overhead';
+		var setOfNewResources:Set(ParametricResourceDemand);
+		
+		overhead_action.resourceDemand_Action += new ParametricResourceDemand(getCPUDemand()); 
+		//overhead_action.resourceDemand_Action += new ParametricResourceDemand(getHDDDemand()); 
+		
+		overhead_action.resourceDemand_Action[ParametricResourceDemand] -> forEach(demand){
+			if(demand.requiredResource_ParametricResourceDemand.entityName="CPU"){
+				demand.specification_ParametericResourceDemand.specification:=overhead;
+			};
+//			if(demand.requiredResource_ParametricResourceDemand.entityName="HDD"){
+//				demand.specification_ParametericResourceDemand.specification:="111";
+//			}
+		};
+
+       return overhead_action;
+}
+
+helper setSuccessorAndPredecessor(list:List(AbstractAction)):List(AbstractAction){
+	var count:=1;
+    while(count<=list->size()-1){
+    	log(list->at(count).entityName);
+     	list->at(count).successor_AbstractAction:=list->at(count+1);
+       	count:=count+1;
+    };
+    return list;
+}
+constructor InternalAction::InternalAction(oldInternalAction : InternalAction){
+		entityName:= oldInternalAction.entityName;
+		resourceDemandingBehaviour_AbstractAction := oldInternalAction.resourceDemandingBehaviour_AbstractAction;
+		oldInternalAction.resourceDemand_Action -> forEach(oldResDemandAction){
+		resourceDemand_Action += new ParametricResourceDemand(oldResDemandAction,result);
+		//setOfRes+=oldInternalAction.resourceDemand_Action;
+		}
+}
+constructor ParametricResourceDemand::ParametricResourceDemand(oldParametricResourceDemand : ParametricResourceDemand, aInternalAction :InternalAction){
+
+	action_ParametricResourceDemand := oldParametricResourceDemand.action_ParametricResourceDemand;
+	requiredResource_ParametricResourceDemand := oldParametricResourceDemand.requiredResource_ParametricResourceDemand; 
+	specification_ParametericResourceDemand:= new PCMRandomVariable(oldParametricResourceDemand);
+	
+}
+constructor ParametricResourceDemand::ParametricResourceDemand(oldParametricResourceDemand : ParametricResourceDemand){
+
+	action_ParametricResourceDemand := oldParametricResourceDemand.action_ParametricResourceDemand;
+	requiredResource_ParametricResourceDemand := oldParametricResourceDemand.requiredResource_ParametricResourceDemand; 
+	specification_ParametericResourceDemand:= new PCMRandomVariable(oldParametricResourceDemand);
+	
+}
+constructor PCMRandomVariable::PCMRandomVariable(oldParametricResourceDemand : ParametricResourceDemand){
+			//not possible to change values here directly
+			//expression is read-only
+			//no acces to "expression :=" which defines which Datatype specification should be
+			//often expression has an IntLiteral as value (bcs we copied the old ParametricResourceDemand)
+			//but if we change our specificationString to a Double an error occurs  bcs then expression needs to be a DoubleLiteral
+			//solution: changing the specification value after PCMRandomVariable was inititialized auto converts the expression:= value 
+			specification := oldParametricResourceDemand.specification_ParametericResourceDemand.specification;
+			
+}
+query getCPUDemand():ParametricResourceDemand{
+	
+	var resource:ParametricResourceDemand;
+	setOfRes->forEach(demand){
+			if(demand.requiredResource_ParametricResourceDemand.entityName="CPU"){
+			    resource:=demand;
+			   
+				break;
+			}	
+	};
+	return resource;
+}

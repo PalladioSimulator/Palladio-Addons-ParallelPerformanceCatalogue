@@ -1,0 +1,26 @@
+Manifest-Version: 1.0
+Bundle-SymbolicName: org.palladiosimulator.parallelcatalogue.catalog;s
+ ingleton:=true
+Export-Package: org.palladiosimulator.architecturaltemplates.catalog.b
+ lack
+Bundle-Name: Architectural Templates - Parallel Performance Catalog
+Bundle-Version: 1.1.1.201909061042
+Require-Bundle: org.eclipse.core.runtime;bundle-version="3.10.0",org.e
+ clipse.m2m.qvt.oml;bundle-version="3.4.0",org.eclipse.m2m.qvt.oml.pro
+ ject;bundle-version="3.4.0",org.modelversioning.emfprofile;bundle-ver
+ sion="1.1.0",org.modelversioning.emfprofile.registry;bundle-version="
+ 1.0.0",org.eclipse.emf;bundle-version="2.6.0",de.uka.ipd.sdq.identifi
+ er;bundle-version="2.1.0",org.palladiosimulator.pcm;bundle-version="4
+ .0.1",org.palladiosimulator.analyzer.completions;bundle-version="1.0.
+ 0",org.palladiosimulator.mdsdprofiles;bundle-version="1.0.0",org.pall
+ adiosimulator.mdsdprofiles.api;bundle-version="1.0.0",de.uka.ipd.sdq.
+ simucomframework;bundle-version="4.1.0",de.uka.ipd.sdq.simucomframewo
+ rk.variables;bundle-version="1.0.0",org.palladiosimulator.architectur
+ altemplates.ui;bundle-version="1.0.0"
+Bundle-ManifestVersion: 2
+Bundle-Activator: org.palladiosimulator.architecturaltemplates.catalog
+ .Activator
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ActivationPolicy: lazy
+Bundle-Vendor: palladiosimulator.org
+
