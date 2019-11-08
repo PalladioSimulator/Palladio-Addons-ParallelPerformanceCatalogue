@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <?pde version="3.8"?><target name="org.palladiosimulator.parallelcatalogue Target Platform" sequenceNumber="1">
 <locations>
-	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="false" type="InstallableUnit" filter="release" refresh="true">
-		<unit id="org.palladiosimulator.simulizar.feature.feature.group" version="tbd"/>
-		<repository location="https://updatesite.palladio-simulator.com/palladio-analyzer-simulizar/releases/latest/"/>
-	</location>
 	</location>
 	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="false" type="InstallableUnit" filter="release" refresh="true">
 		<unit id="de.uka.ipd.sdq.identifier.feature.feature.group" version="tbd"/>
