@@ -39,7 +39,7 @@ main(){
       	
       	resourceDemandingSeffs->forEach(seff){
 			seff.allSubobjects()->forEach(action){
-				log(action.toString());
+				
 				if(action.oclIsTypeOf(InternalAction)){
 					setOfRes+=action.oclAsType(InternalAction).resourceDemand_Action;
 				};
@@ -183,8 +183,7 @@ helper convertActions(action:AbstractAction, threadPoolSize:Real, iterationCount
 	switch {
 		case (action.oclIsTypeOf(InternalAction)){
        			var tempAction:InternalAction := new InternalAction(action.oclAsType(InternalAction));
-       			log(action.id);
-       			log(action.successor_AbstractAction.entityName);
+       			
        			tempAction.oclAsType(InternalAction).resourceDemand_Action[ParametricResourceDemand] -> forEach(demand){
        				var temp:PCMRandomVariable:=demand.specification_ParametericResourceDemand;
        				temp.specification := "(" + demand.specification_ParametericResourceDemand.specification+  "*"+ iterationCount.toString() +")" + "/"+threadPoolSize.toString();
@@ -199,9 +198,7 @@ helper convertActions(action:AbstractAction, threadPoolSize:Real, iterationCount
 			var forkAction:ForkAction;
 			if(isProfileApplied(action.oclAsType(EObject),PARALLEL_LOOP_ACTION_PROFILE) and
 			hasAppliedStereotype(action.oclAsType(LoopAction),PARALLEL_LOOP_ACTION_STEREOTYPE)){
-				log("has applyed stereotype **",hasAppliedStereotype(action.oclAsType(LoopAction),PARALLEL_LOOP_ACTION_STEREOTYPE));
-				log("has applyed profile **",isProfileApplied(action.oclAsType(EObject),PARALLEL_LOOP_ACTION_PROFILE));
-				log("Found loopAction replacing it with ForkAction...",action.entityName);
+				
 				var threadPoolSize1 : Real := getDoubleTaggedValue(action, THREAD_POOL_SIZE, PARALLEL_LOOP_ACTION_STEREOTYPE);
 				var overhead1 : String := getStringTaggedValue(action,OVERHEAD,PARALLEL_LOOP_ACTION_STEREOTYPE);
 				forkAction := new ForkAction(action.oclAsType(LoopAction),threadPoolSize1,overhead1,true);	   
@@ -329,7 +326,7 @@ constructor PCMRandomVariable::PCMRandomVariable(oldDemand:ParametricResourceDem
 helper createForkedBehaviorList(aLoop : LoopAction,aFork : ForkAction, aSyncPoint : SynchronisationPoint,threadPoolSize : Real,overhead:String) : Set(ForkedBehaviour) {
 
 			 log("+++ ThradPoolSize",threadPoolSize);
-             log("OVERHEAD IN CREATE FORKED BEHAV"+overhead.toString());
+             
              var counter : Real := 0;
 
              var list : Set(ForkedBehaviour);
