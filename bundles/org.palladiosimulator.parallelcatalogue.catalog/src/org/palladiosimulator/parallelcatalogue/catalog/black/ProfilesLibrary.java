@@ -102,11 +102,13 @@ public class ProfilesLibrary {
     }
     
     //new addition
+    @SuppressWarnings("unchecked")
     public static double getDoubleTaggedValue(final EObject pcmEntity, final String taggedValueName,
             final String stereotypeName) {
         return StereotypeAPI.getTaggedValue(pcmEntity, taggedValueName, stereotypeName);
     }
     //new addition
+    @SuppressWarnings("unchecked")
     public static String getStringTaggedValue(final EObject pcmEntity, final String taggedValueName,
             final String stereotypeName) {
         return StereotypeAPI.getTaggedValue(pcmEntity, taggedValueName, stereotypeName);
