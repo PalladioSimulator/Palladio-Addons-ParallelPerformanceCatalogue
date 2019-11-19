@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Architectural Templates - Parallel Performance Catalog
 Bundle-SymbolicName: org.palladiosimulator.parallelcatalogue.catalog;singleton:=true
 Bundle-Version: 1.1.1.qualifier
-Bundle-Activator: org.palladiosimulator.architecturaltemplates.catalog.Activator
+Bundle-Activator: org.palladiosimulator.parallelcatalogue.catalog.Activator
 Bundle-Vendor: palladiosimulator.org
 Require-Bundle: org.eclipse.core.runtime;bundle-version="3.10.0",
  org.eclipse.m2m.qvt.oml;bundle-version="3.4.0",
@@ -21,4 +21,4 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.10.0",
  org.palladiosimulator.architecturaltemplates.ui;bundle-version="1.0.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
-Export-Package: org.palladiosimulator.architecturaltemplates.catalog.black
+Export-Package: org.palladiosimulator.parallelcatalogue.catalog.black
