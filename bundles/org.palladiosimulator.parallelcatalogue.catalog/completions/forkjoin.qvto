@@ -41,7 +41,7 @@ main() {
       	
 		resourceDemandingSeffs->forEach(seff){
 			seff.allSubobjects()->forEach(action){
-				log(action.toString());
+				
 				if(action.oclIsTypeOf(InternalAction)){
 					setOfRes+=action.oclAsType(InternalAction).resourceDemand_Action;
 				};
@@ -58,7 +58,7 @@ mapping inout ResourceDemandingSEFF::ForkActionBeforeToForkActionAfter(){
 }
 helper removeResourceContainer(list : List(ProcessingResourceType)){
 	list->forEach(res){
-		log(res.entityName);
+		
 		delete(listOfRootObjects,res); 
 	};
 }
@@ -70,7 +70,6 @@ helper replaceOldForkWithNewFork(oldStepsSet:Set(AbstractAction)):Set(AbstractAc
 	oldStepsSet -> forEach(action){
 		if(action.oclIsTypeOf(ForkAction)){
 			var list:List(ForkedBehaviour);
-			log("SIZEEEEEEEEEEEEEEEEE"+action.oclAsType(ForkAction).synchronisingBehaviours_ForkAction.synchronousForkedBehaviours_SynchronisationPoint->size().toString());
 			action.oclAsType(ForkAction).synchronisingBehaviours_ForkAction.synchronousForkedBehaviours_SynchronisationPoint->forEach(behaviour){
 				if(isProfileApplied(behaviour.oclAsType(EObject),FORK_JOIN_ACTION_PROFILE) and
 					hasAppliedStereotype(behaviour.oclAsType(EObject),FORK_JOIN_ACTION_STEREOTYPE)){
@@ -92,7 +91,7 @@ helper replaceOldForkWithNewFork(oldStepsSet:Set(AbstractAction)):Set(AbstractAc
 
 //constructor ForkAction::ForkAction(aFork: PCMSEFF::ForkAction,threadPoolSize : Real,overhead:String, innerTrigger: Boolean) {
 constructor ForkAction::ForkAction(aFork: PCMSEFF::ForkAction,list:List(ForkedBehaviour), innerTrigger: Boolean) {
-       log ("create fork action for loop" + aFork.entityName);
+      
        
        if(not innerTrigger){
 	   		predecessor_AbstractAction := aFork.predecessor_AbstractAction;
@@ -104,7 +103,7 @@ constructor ForkAction::ForkAction(aFork: PCMSEFF::ForkAction,list:List(ForkedBe
 }
 constructor SynchronisationPoint::SynchronisationPoint(aForkOld : PCMSEFF::ForkAction,aFork : PCMSEFF::ForkAction,list:List(ForkedBehaviour)){
       
-       log ("create synchronisation point for loop" + aFork.entityName);
+     
 
        forkAction_SynchronisationPoint := aFork;
        
@@ -132,7 +131,7 @@ helper createForkedBehaviorList(aForkOld : ForkAction,aFork : ForkAction, aSyncP
 }
 constructor ForkedBehaviour::ForkedBehaviour(aForkOld : ForkAction,aFork : ForkAction, aSyncPoint : SynchronisationPoint, overhead:String,behaviour:ForkedBehaviour) {
 	
-        log ("create forked behavour for loop" + aForkOld.entityName);
+       
         forkAction_ForkedBehaivour := aFork;       
         synchronisationPoint_ForkedBehaviour := aSyncPoint;
 
@@ -199,7 +198,7 @@ helper createOverheadAction(overhead:String):InternalAction{
 helper setSuccessorAndPredecessor(list:List(AbstractAction)):List(AbstractAction){
 	var count:=1;
     while(count<=list->size()-1){
-    	log(list->at(count).entityName);
+    	//log(list->at(count).entityName);
      	list->at(count).successor_AbstractAction:=list->at(count+1);
        	count:=count+1;
     };
