@@ -1,0 +1,591 @@
+import org.palladiosimulator.architecturaltemplates.catalog.black.ProfilesLibrary;
+import org.palladiosimulator.architecturaltemplates.catalog.black.PCMLibrary;
+//import de.uka.ipd.sdq.simucomframework.variables.StackContext;
+
+
+modeltype ECORE uses 'http://www.eclipse.org/emf/2002/Ecore';
+modeltype PCM_CORE uses 'http://palladiosimulator.org/PalladioComponentModel/Core/5.2';
+modeltype PCM_ENTITY uses 'http://palladiosimulator.org/PalladioComponentModel/Core/Entity/5.2';
+modeltype PCMSEFF uses pcm::seff('http://palladiosimulator.org/PalladioComponentModel/SEFF/5.2');
+modeltype PCMComposition uses pcm::core::composition('http://palladiosimulator.org/PalladioComponentModel/5.2');
+modeltype PCM_COMPLETION uses 'http://palladiosimulator.org/AnalyzerFramework/Completions/1.0';
+modeltype PCMSEFF_PERFORMANCE uses pcm::seff::seff_performance('http://palladiosimulator.org/PalladioComponentModel/SEFF/5.2');
+modeltype PCM_ALLOC uses 'http://palladiosimulator.org/PalladioComponentModel/Allocation/5.2';
+modeltype PCM_Repository uses 'http://palladiosimulator.org/PalladioComponentModel/Repository/5.2';
+modeltype PCM_RESOURCE uses pcm::resourcetype;
+modeltype STOEX uses stoex;
+modeltype PROBFUNC uses probfunction;
+modeltype PCM_COMP uses pcm::core::composition;
+modeltype PCM_SYS uses 'http://palladiosimulator.org/PalladioComponentModel/System/5.2';
+modeltype PCM_RESENV uses pcm::resourceenvironment;
+
+//Inout model is defined and passed from AtCatalog-> role XYZ -> qvto ->pcm blackboard-> pcm file Extension
+transformation ParallelStreams(inout pcmRepository : PCM_Repository,inout pcmComp:PCM_COMP,inout pcmAllocation:PCM_ALLOC);
+
+property setOfRes:Set(ParametricResourceDemand);
+property hardcode:ParametricResourceDemand;
+property PARALLEL_STREAMS_ACTION_PROFILE : String = "ParallelStreamsProfile"; //<- change this if profile is renamed 
+property PIPELINE_ACTION_STEREOTYPE : String = "PipelineAction"; //<- change this if steroetype is renamed 
+property PIPELINE_HEAD_ACTION_STEREOTYPE : String = "PipelineHeadAction"; //<- change this if steroetype is renamed 
+
+property toBeDeleted:List(NamedElement);
+property THREAD_POOL_SIZE : String = "threadPoolSize";//<- change this if steroetype attribute is renamed 
+property OVERHEAD : String = "overhead";
+property SYNCH : String = "asynchronous";
+
+
+property allocation : Allocation = pcmAllocation.rootObjects()![Allocation];
+property system : System = allocation.system_Allocation;
+
+main() {
+
+		log ("AT Transformation: Parallel Streams initilized");
+
+		var repoClasses : Set(Repository) := pcmRepository.rootObjects()[Repository];
+		
+		var assemblyContexts : Set(AssemblyContext) := system.assemblyContexts__ComposedStructure;
+		var allComponents: Set(BasicComponent);
+		
+		//Set for all components in the repository diagram, annotated with @PipelineAction
+		var annotatedComponents: Set(BasicComponent);
+		
+		//Set for all interfaces in the repository digram, annotated with @PipelineAction and @PipelineHeadAction
+		var annotatedInterfaces: Set(Interface);
+		
+		//Set for all roles, contained in the repository diagram
+		var roles:Set(Role);
+		
+		//Fist interface of the pipeline (@PipelineHeadAction)
+		var headInt: Interface ;
+		
+		//First component of the pipeline 
+		var headComp: BasicComponent;
+		
+		//Iteration through all components in the repository diagram and each component,
+		//annotated with @PipelineAction is added to the annotatedComponents set
+		repoClasses->forEach(repo){
+		
+		   
+			repo.components__Repository[BasicComponent]->forEach(comp){
+				if(isProfileApplied(comp.oclAsType(EObject),PARALLEL_STREAMS_ACTION_PROFILE) and
+				 hasAppliedStereotype(comp.oclAsType(BasicComponent),PIPELINE_ACTION_STEREOTYPE)) {
+				 	 annotatedComponents+=comp;
+				 	 //For each component, all providing roles are added to the roles set
+				 	 comp.providedRoles_InterfaceProvidingEntity->forEach(role){
+				 	 	roles+=role;
+				 	 };
+				 	 //For each component, all requiring roles are added to the roles set
+				 	 comp.requiredRoles_InterfaceRequiringEntity->forEach(role){
+				 	 	roles+=role;
+				 	 };
+				 };
+				 allComponents+=comp;
+			};
+			
+			//Iteration through all interfaces in the repository diagram and each interface, 
+			//annotated with @PipelineAction or @PipelineHeadAction is added to the annotatedInterfaces set
+			repo.interfaces__Repository[Interface]->forEach(int){
+				if(isProfileApplied(int.oclAsType(EObject),PARALLEL_STREAMS_ACTION_PROFILE) and
+				 (hasAppliedStereotype(int.oclAsType(Interface),PIPELINE_ACTION_STEREOTYPE) or 
+				  hasAppliedStereotype(int.oclAsType(Interface),PIPELINE_HEAD_ACTION_STEREOTYPE) ) ) {
+				  	//Detection of the first interface in the pipepline, by searching for @PipelineHeadAction annotation
+				  	if(hasAppliedStereotype(int.oclAsType(Interface),PIPELINE_HEAD_ACTION_STEREOTYPE)){
+				  		headInt:=int;
+				  	};
+				 	annotatedInterfaces+=int;
+				 };
+			};
+			
+						
+		};
+		
+		
+		
+		//Detection of first component in the pipeline, by searching for provided role, pointing to the head interface
+		
+		headComp:=findHeadComponent(annotatedComponents,headInt);
+		
+//		annotatedComponents->forEach(comp){
+//	    		comp.oclAsType(InterfaceProvidingEntity).providedRoles_InterfaceProvidingEntity->forEach(role){
+//	    			if(role.oclAsType(OperationProvidedRole).providedInterface__OperationProvidedRole=headInt.oclAsType(OperationInterface)){
+//	    				headComp:=comp;
+//	    			};
+//	    		}
+//	    };
+	    
+	    var headAssemblyContext:AssemblyContext;
+	    system.assemblyContexts__ComposedStructure->forEach(context){
+	   		if(context.encapsulatedComponent__AssemblyContext=headComp){
+	    		headAssemblyContext:=context;	
+	    	}
+	    };
+	    
+		//Sets for replicated pipelines of the original pipeline, containing the duplicated 
+		//components and interfaces 
+		var copiedInterfaces:Set(Interface);
+		var copiedComponents:Set(BasicComponent);
+		
+		//threadPoolSize is defined by the user and characterizes the number of replicas of the original pipeline
+		var threadPoolSize : Integer := getIntTaggedValue(headInt, THREAD_POOL_SIZE, PIPELINE_HEAD_ACTION_STEREOTYPE);
+		var async: Integer := getIntTaggedValue(headInt, SYNCH, PIPELINE_HEAD_ACTION_STEREOTYPE);
+		
+		var asynchronous:Boolean:=false;
+		if(async>0){
+			asynchronous:=true;
+		};
+		
+		var counter:=1;
+		
+		var headInterfaces:Set(Interface);
+		headInterfaces+=headInt;
+		//Dependent on the threadPoolSize = n, the pipepline is replicated n times 
+		//Iteration through all annotated components and interfaces, instantiation of new components and interfaces
+		//The entity names of the objects in the original pipeline are reused, but for each iteration, the counter
+		//is appended as string to the entity name --> differentiation of pipelines
+		while(counter<threadPoolSize){
+			annotatedComponents->forEach(comp){
+				var newComp:=new BasicComponent(comp.entityName+"."+counter.toString());
+				//newComp.entityName:=comp.entityName+"."+counter.toString();
+				copiedComponents+=newComp;
+				
+				allComponents+=newComp;
+				var newAssemblyContext:=new AssemblyContext(newComp);
+//				newAssemblyContext.encapsulatedComponent__AssemblyContext:=newComp;
+//				newAssemblyContext.entityName:="Assembly_"+newComp.entityName;
+//				system.assemblyContexts__ComposedStructure+=newAssemblyContext;
+				var allocContext : AllocationContext := new AllocationContext(newAssemblyContext, findResourceContainer(headAssemblyContext));
+
+			};
+			annotatedInterfaces->forEach(int){
+				var newInt:=new OperationInterface(int.entityName+"."+counter.toString());
+				//newInt.entityName:=int.entityName+"."+counter.toString();
+				
+				
+				var signature:OperationSignature;
+				int.oclAsType(OperationInterface).signatures__OperationInterface->forOne(sig){
+					signature:=sig.deepclone();
+					signature.entityName:=sig.entityName+"."+counter.toString();
+				};
+				signature.interface__OperationSignature:=newInt;
+				var placeholderSignature:OperationSignature;
+				signature.id:=placeholderSignature.id;
+
+
+				copiedInterfaces+=newInt;
+				if(newInt.entityName=headInt.entityName+"."+counter.toString()){
+					headInterfaces+=newInt;
+				};
+				annotatedComponents->forEach(comp){
+					comp.oclAsType(InterfaceProvidingEntity).providedRoles_InterfaceProvidingEntity->forEach(role){
+						if(role.oclAsType(OperationProvidedRole).providedInterface__OperationProvidedRole.entityName=int.entityName){
+							//var provRole:=new OperationProvidedRole();
+							
+							copiedComponents->forEach(copiedComp){
+								
+								if(copiedComp.entityName=comp.entityName+"."+counter.toString()){
+									var provRole:=new OperationProvidedRole(copiedComp.entityName+"."+newInt.entityName+".OperationProvidedRole1",
+									newInt.oclAsType(OperationInterface),
+									copiedComp);
+//									provRole.providingEntity_ProvidedRole:=copiedComp;		
+//									provRole.providedInterface__OperationProvidedRole:=newInt;
+//									provRole.entityName:=copiedComp.entityName+"."+newInt.entityName+".OperationProvidedRole1";
+								};
+							};
+							
+							
+						};
+					};
+					
+					
+					comp.oclAsType(InterfaceRequiringEntity).requiredRoles_InterfaceRequiringEntity->forEach(role){
+						if(role.oclAsType(OperationRequiredRole).requiredInterface__OperationRequiredRole.entityName=int.entityName){
+							//var reqRole:=new OperationRequiredRole();
+							
+							copiedComponents->forEach(copiedComp){
+								if(copiedComp.entityName=comp.entityName+"."+counter.toString()){
+									var reqRole:=new OperationRequiredRole(copiedComp.entityName+"."+newInt.entityName+".OperationRequiredRole1",
+									newInt.oclAsType(OperationInterface),
+									copiedComp);
+//									reqRole.requiringEntity_RequiredRole:=copiedComp;		
+//									reqRole.requiredInterface__OperationRequiredRole:=newInt;
+//									reqRole.entityName:=copiedComp.entityName+"."+newInt.entityName+".OperationRequiredRole1";
+								};
+							};
+							
+							
+						};
+					};
+				};
+				
+		
+			};
+			
+
+			annotatedComponents->forEach(comp1){
+				copiedComponents->forEach(comp2){
+					comp2->copySeffDiagram(comp1,counter);
+//					if(comp1.entityName+"."+counter.toString()=comp2.entityName){
+//						comp1.serviceEffectSpecifications__BasicComponent->forEach(seff){
+//							var placeholderSEFF:ServiceEffectSpecification;
+//							placeholderSEFF:=seff.deepclone();
+//							
+//							//comp2.serviceEffectSpecifications__BasicComponent+=seff.deepclone();
+//							
+//							comp2.providedRoles_InterfaceProvidingEntity->forOne(role){
+//								role.oclAsType(OperationProvidedRole).providedInterface__OperationProvidedRole.signatures__OperationInterface->forOne(sig){
+//									placeholderSEFF.describedService__SEFF:=sig;
+//								};
+//							};
+//							comp2.serviceEffectSpecifications__BasicComponent:=placeholderSEFF;
+//							comp2.serviceEffectSpecifications__BasicComponent.oclAsType(ResourceDemandingBehaviour).steps_Behaviour->forEach(action){
+//								var placeholerAction:AbstractAction;
+//								action.id:=placeholerAction.id;
+//								if(action.oclIsTypeOf(ExternalCallAction)){
+//								
+//									comp2.requiredRoles_InterfaceRequiringEntity->forOne(role){
+//										action.oclAsType(ExternalCallAction).role_ExternalService:=role.oclAsType(OperationRequiredRole);
+//										role.oclAsType(OperationRequiredRole).requiredInterface__OperationRequiredRole.signatures__OperationInterface->forOne(sig){
+//											action.oclAsType(ExternalCallAction).calledService_ExternalService:=sig;
+//										};
+//									};
+//								};
+//							};
+//						}
+//					};
+				};
+			};
+			log("SIZE "+ counter.toString()+" "+copiedComponents->size().toString());
+			//var duplicateSet:Set(String);
+			copiedComponents->forEach(component1){
+				component1.requiredRoles_InterfaceRequiringEntity->forOne(reqRole){
+					copiedComponents->forEach(component2){
+						component2.providedRoles_InterfaceProvidingEntity->forOne(provRole){
+							if(reqRole.oclAsType(OperationRequiredRole).requiredInterface__OperationRequiredRole=provRole.oclAsType(OperationProvidedRole).providedInterface__OperationProvidedRole){
+								log(component1.entityName+" "+component2.entityName+" here");
+								
+//								if(not duplicateSet->includes(component1.entityName+"."+component2.entityName)){
+//									duplicateSet+=component1.entityName+"."+component2.entityName;
+								
+								
+								
+								var assembly1:AssemblyContext;
+								var assembly2:AssemblyContext;
+								system.assemblyContexts__ComposedStructure->forEach(context){
+									if(context.encapsulatedComponent__AssemblyContext=component1){
+										assembly1:=context;
+									};
+									if(context.encapsulatedComponent__AssemblyContext=component2){
+										assembly2:=context;
+									};
+								};
+								//
+//								var connector:=new AssemblyConnector(assembly2,assembly1,provRole.oclAsType(OperationProvidedRole),
+//									reqRole.oclAsType(OperationRequiredRole));
+//								connector.providedRole_AssemblyConnector:=provRole.oclAsType(OperationProvidedRole);
+//								connector.requiredRole_AssemblyConnector:=reqRole.oclAsType(OperationRequiredRole);
+//								connector.requiringAssemblyContext_AssemblyConnector:=assembly1;
+//								connector.providingAssemblyContext_AssemblyConnector:=assembly2;
+//								system.connectors__ComposedStructure+=connector;
+								
+								var connector:=new AssemblyConnector(assembly2,assembly1,provRole.oclAsType(OperationProvidedRole),reqRole.oclAsType(OperationRequiredRole));
+								
+								
+							//};
+							};
+						};
+					};
+				};
+			};
+			
+			
+			repoClasses->forOne(repo){
+	    		repo.components__Repository+=copiedComponents;
+	    		repo.interfaces__Repository+=copiedInterfaces;
+	    	};
+			var counter3:=1;
+			
+			
+//			while(counter3<=copiedComponents->size()){
+//				log("DELETE "+counter3.toString());
+//				copiedComponents->asList()->removeAt(counter3);
+//				copiedInterfaces->asList()->removeAt(counter3);
+//				counter3:=counter3+1;
+//			};
+			
+			copiedComponents:=null;
+			copiedInterfaces:=null;
+			
+			counter:=counter+1;
+		};
+	    
+	    
+	    
+	    var forkInt:=new OperationInterface("ForkInterface");
+       	//forkInt.entityName:="ForkInterface";
+       	var forkSig:= new OperationSignature("forkStart",forkInt);
+//       	forkSig.entityName:="forkStart";
+//       	forkSig.interface__OperationSignature:=forkInt;
+       	
+       	
+       	var forkComp:=new BasicComponent("ForkComponent");
+       	//forkComp.entityName:="ForkComponent";
+       	
+       	var startRole:=new OperationProvidedRole("ForkComponentProvidedRole",forkInt,forkComp);
+//       	startRole.entityName:="ForkComponentProvidedRole";
+//       	startRole.providedInterface__OperationProvidedRole:=forkInt;
+//       	startRole.providingEntity_ProvidedRole:=forkComp;
+       	
+       	headInterfaces->forEach(int){
+       		var startReqRole:= new OperationRequiredRole("ForkComponent."+int.entityName+".RequiredRole",int.oclAsType(OperationInterface),forkComp);
+//       	    startReqRole.entityName:="ForkComponent."+int.entityName+".RequiredRole";
+//       	    startReqRole.requiredInterface__OperationRequiredRole:=int.oclAsType(OperationInterface);
+//       	    startReqRole.requiringEntity_RequiredRole:=forkComp;
+       	    
+       	};
+		
+		forkComp.serviceEffectSpecifications__BasicComponent:=createStartCall(forkComp,forkSig,headInterfaces,asynchronous);
+		
+		var forkAssembly:=new AssemblyContext(forkComp);
+//		forkAssembly.encapsulatedComponent__AssemblyContext:=forkComp;
+//		forkAssembly.entityName:="Assembly_"+forkComp.entityName;	
+//		system.assemblyContexts__ComposedStructure+=forkAssembly;
+		
+		
+		var allocContext : AllocationContext := new AllocationContext(forkAssembly, findResourceContainer(headAssemblyContext));
+		
+		
+		allComponents->forEach(component){
+			//log(component.entityName);
+			//log(annotatedComponents->asList()->includes(component).toString());
+			if(not annotatedComponents->asList()->includes(component)){
+			
+				component.requiredRoles_InterfaceRequiringEntity->forEach(role){
+					if(role.oclAsType(OperationRequiredRole).requiredInterface__OperationRequiredRole=headInt.oclAsType(OperationInterface)){
+					
+						component.serviceEffectSpecifications__BasicComponent->forOne(seff){
+							seff.oclAsType(ResourceDemandingSEFF).steps_Behaviour->forEach(action){
+								if(action.oclIsTypeOf(ExternalCallAction) and action.oclAsType(ExternalCallAction).role_ExternalService=role){
+									role.oclAsType(OperationRequiredRole).requiredInterface__OperationRequiredRole:=forkInt;
+									role.oclAsType(OperationRequiredRole).requiringEntity_RequiredRole:=component;
+									action.oclAsType(ExternalCallAction).role_ExternalService:=role.oclAsType(OperationRequiredRole);
+									action.oclAsType(ExternalCallAction).calledService_ExternalService:=forkSig;
+									
+									var componentAssembly:AssemblyContext;
+									system.assemblyContexts__ComposedStructure->forEach(comp){
+										if(comp.entityName="Assembly_"+component.entityName){
+											componentAssembly:=comp;
+										};
+									};
+									var connector:=new AssemblyConnector(forkAssembly,componentAssembly,startRole,role.oclAsType(OperationRequiredRole));
+//									connector.requiringAssemblyContext_AssemblyConnector:=componentAssembly;
+//									connector.providingAssemblyContext_AssemblyConnector:=forkAssembly;
+//									connector.requiredRole_AssemblyConnector:=role.oclAsType(OperationRequiredRole);
+//									connector.providedRole_AssemblyConnector:=startRole;
+//									system.connectors__ComposedStructure+=connector;
+								};
+							};
+						};
+					};
+				};
+			};
+		};
+		
+		
+		var headContext:AssemblyContext;
+		system.connectors__ComposedStructure->forEach(connector){
+			
+			system.assemblyContexts__ComposedStructure->forEach(context){
+				if(context.entityName="Assembly_"+headComp.entityName){
+					headContext:=context;
+				};
+			};
+			if(connector.oclAsType(AssemblyConnector).providingAssemblyContext_AssemblyConnector=headContext){
+				delete(system.connectors__ComposedStructure->asList(),connector);
+			};	
+		};
+		
+		headInterfaces->forEach(interface){
+			allComponents->forEach(component){
+				component.providedRoles_InterfaceProvidingEntity->forEach(role){
+					if(role.oclAsType(OperationProvidedRole).providedInterface__OperationProvidedRole=interface){
+						system.assemblyContexts__ComposedStructure->forEach(context){
+							if(context.entityName="Assembly_"+component.entityName){
+//								var assemblyConnector:=new AssemblyConnector();
+//								assemblyConnector.providingAssemblyContext_AssemblyConnector:=context;
+//								assemblyConnector.requiringAssemblyContext_AssemblyConnector:=forkAssembly;
+//								assemblyConnector.providedRole_AssemblyConnector:=role.oclAsType(OperationProvidedRole);
+								
+								var placeholder:RequiredRole;
+								forkComp.requiredRoles_InterfaceRequiringEntity->forEach(reqRole){
+									if(reqRole.oclAsType(OperationRequiredRole).requiredInterface__OperationRequiredRole=interface){
+										placeholder:=reqRole;
+									};
+								};
+								//assemblyConnector.requiredRole_AssemblyConnector:=placeholder.oclAsType(OperationRequiredRole);
+								//system.connectors__ComposedStructure+=assemblyConnector;
+								
+								var assemblyConnector:=new AssemblyConnector(context,forkAssembly,role.oclAsType(OperationProvidedRole),
+								placeholder.oclAsType(OperationRequiredRole));
+							};
+						};
+					};
+				};
+			};
+		};
+		
+	    repoClasses->forOne(repo){
+	    		repo.components__Repository+=forkComp;
+	    		repo.interfaces__Repository+=forkInt;
+	    };
+	    repoClasses->forOne(repo){
+	    	repo.components__Repository[BasicComponent]->forEach(comp){
+	    		log(comp.serviceEffectSpecifications__BasicComponent->size().toString());	
+	    	};
+	    };
+};
+
+constructor AssemblyConnector::AssemblyConnector(provContext:AssemblyContext,reqContext:AssemblyContext,provRole:OperationProvidedRole,reqRole:OperationRequiredRole){
+	providingAssemblyContext_AssemblyConnector:=provContext;
+    requiringAssemblyContext_AssemblyConnector:=reqContext;
+	providedRole_AssemblyConnector:=provRole;
+	requiredRole_AssemblyConnector:=reqRole;
+	entityName:=reqContext.entityName+"."+provContext.entityName;
+	system.connectors__ComposedStructure+=result;
+};
+helper deleteSignature(connector:Connector){
+	delete(system.connectors__ComposedStructure->asList(),connector);
+};
+
+constructor OperationProvidedRole::OperationProvidedRole(roleName:String, providedInterface:OperationInterface, providingComponent:BasicComponent) {
+	
+	entityName := roleName;
+	providedInterface__OperationProvidedRole:=providedInterface;
+    providingEntity_ProvidedRole:=providingComponent;
+
+};
+
+
+constructor OperationRequiredRole::OperationRequiredRole(roleName:String, requiredInterface:OperationInterface, requiringComponent:BasicComponent) {
+	
+	entityName := roleName;
+	requiredInterface__OperationRequiredRole:=requiredInterface;
+	requiringEntity_RequiredRole:=requiringComponent;	
+
+};
+
+helper createStartCall(component:BasicComponent,forkSig:Signature,headInterfaces:Set(Interface),async:Boolean):ResourceDemandingSEFF{
+	var startAction:=new StartAction();
+	var stopAction:=new StopAction();
+	var forkAction:=new ForkAction();
+	if(not async){
+		forkAction.synchronisingBehaviours_ForkAction:=new SynchronisationPoint();
+	};
+	headInterfaces->forEach(int){
+		var forkBeh:=new ForkedBehaviour();
+		var listOfActions:List(AbstractAction);
+		var startAction1:=new StartAction();
+		var stopAction1:=new StopAction();
+		var exCall:=new ExternalCallAction();
+		int.oclAsType(OperationInterface).signatures__OperationInterface->forOne(sig){
+			exCall.calledService_ExternalService:=sig;
+		};
+		component.requiredRoles_InterfaceRequiringEntity->forEach(reqRole){
+			if(reqRole.oclAsType(OperationRequiredRole).requiredInterface__OperationRequiredRole=int){
+				exCall.role_ExternalService:=reqRole.oclAsType(OperationRequiredRole);
+			}
+		};
+		
+		startAction1.successor_AbstractAction:=exCall;
+		exCall.successor_AbstractAction:=stopAction1;
+		listOfActions+=startAction1;
+		listOfActions+=exCall;
+		listOfActions+=stopAction1;
+		forkBeh.steps_Behaviour:=listOfActions->asSet();
+		if(not async){
+			forkAction.synchronisingBehaviours_ForkAction.synchronousForkedBehaviours_SynchronisationPoint+=forkBeh;
+		}else{
+			forkAction.asynchronousForkedBehaviours_ForkAction+=forkBeh;
+		};
+	};
+	startAction.successor_AbstractAction:=forkAction;
+	forkAction.successor_AbstractAction:=stopAction;
+	var seff:=new ResourceDemandingSEFF();
+	seff.describedService__SEFF:=forkSig;
+	seff.steps_Behaviour+=stopAction;
+	seff.steps_Behaviour+=startAction;
+	seff.steps_Behaviour+=forkAction;
+	return seff;
+};
+
+
+constructor OperationInterface::OperationInterface(name:String){
+	entityName:=name;
+};
+
+constructor OperationSignature::OperationSignature(name:String,interface:OperationInterface){
+	entityName:=name;
+	interface__OperationSignature:=interface;
+};
+
+constructor AllocationContext::AllocationContext(ac : AssemblyContext, rc: ResourceContainer){
+	entityName := "Allocation_" + ac.entityName;
+	assemblyContext_AllocationContext := ac;
+	resourceContainer_AllocationContext := rc;
+	allocation_AllocationContext := allocation;
+};
+
+constructor BasicComponent::BasicComponent(name:String){
+	entityName:=name;
+};
+
+constructor AssemblyContext::AssemblyContext(component:BasicComponent){
+		encapsulatedComponent__AssemblyContext:=component;
+		entityName:="Assembly_"+component.entityName;	
+		system.assemblyContexts__ComposedStructure+=result;
+};
+
+query findResourceContainer(assemblyContext : AssemblyContext) : ResourceContainer {
+	return  allocation.allocationContexts_Allocation->selectOne(
+		ac : AllocationContext | 
+		ac.assemblyContext_AllocationContext.id = assemblyContext.id
+		).resourceContainer_AllocationContext;
+};
+
+
+mapping inout BasicComponent::copySeffDiagram(comp1:BasicComponent,counter:Integer){
+	if(comp1.entityName+"."+counter.toString()=self.entityName){
+		comp1.serviceEffectSpecifications__BasicComponent->forEach(seff){
+		var placeholderSEFF:ServiceEffectSpecification;
+		placeholderSEFF:=seff.deepclone();
+		self.providedRoles_InterfaceProvidingEntity->forOne(role){
+			role.oclAsType(OperationProvidedRole).providedInterface__OperationProvidedRole.signatures__OperationInterface->forOne(sig){
+				placeholderSEFF.describedService__SEFF:=sig;
+			};
+		};
+		self.serviceEffectSpecifications__BasicComponent:=placeholderSEFF;
+		self.serviceEffectSpecifications__BasicComponent.oclAsType(ResourceDemandingBehaviour).steps_Behaviour->forEach(action){
+			var placeholerAction:AbstractAction;
+			action.id:=placeholerAction.id;
+			if(action.oclIsTypeOf(ExternalCallAction)){
+				self.requiredRoles_InterfaceRequiringEntity->forOne(role){
+					action.oclAsType(ExternalCallAction).role_ExternalService:=role.oclAsType(OperationRequiredRole);
+					role.oclAsType(OperationRequiredRole).requiredInterface__OperationRequiredRole.signatures__OperationInterface->forOne(sig){
+						action.oclAsType(ExternalCallAction).calledService_ExternalService:=sig;
+					};
+				};
+			};
+		};
+		};
+		};
+};
+
+
+helper findHeadComponent(annotatedComponents:Set(BasicComponent),headInt:Interface):BasicComponent{
+	annotatedComponents->forEach(comp){
+	    		comp.oclAsType(InterfaceProvidingEntity).providedRoles_InterfaceProvidingEntity->forEach(role){
+	    			if(role.oclAsType(OperationProvidedRole).providedInterface__OperationProvidedRole=headInt.oclAsType(OperationInterface)){
+	    				return comp;
+	    			};
+	    		}
+	    };
+}

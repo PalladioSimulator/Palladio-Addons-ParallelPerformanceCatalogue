@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+	<feature url="features/org.palladiosimulator.parallelcatalogue.feature_1.0.0.qualifier.jar" id="org.palladiosimulator.parallelcatalogue.feature" version="1.0.0.qualifier">
+	   <category name="org.palladiosimulator.addons.architecturaltemplates.catalogues.category"/>
+	</feature>
+	<feature url="features/org.palladiosimulator.parallelcatalogue.feature.source_1.0.0.qualifier.jar" id="org.palladiosimulator.parallelcatalogue.feature.source" version="1.0.0.qualifier">
+	   <category name="org.palladiosimulator.addons.architecturaltemplates.catalogues.source.category"/>
+	</feature>
+	<category-def name="org.palladiosimulator.addons.architecturaltemplates.catalogues.category" label="Palladio Bench Addons :: Architectural Templates :: Catalogues">
+	   <description>
+	      These features provide additional catalogues including architectural templates
+	   </description>
+	  </category-def>
+	  <category-def name="org.palladiosimulator.addons.architecturaltemplates.catalogues.source.category" label="Palladio Bench Addons :: Architectural Templates :: Catalogues Source">
+	     <description>
+	        Sources of the Palladio Bench Addons :: Architectural Templates :: Catalogues
+	     </description>
+	  </category-def>
+</site>
