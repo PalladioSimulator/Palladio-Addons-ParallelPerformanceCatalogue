@@ -29,14 +29,14 @@ property amountOfOverhead : Real; //TODO change Attributes in emfprofile to real
 
 main(){
 
-		log ("AT Transformation: Parallel Loop initilized");
+	log ("AT Transformation: Parallel Loop initilized");
         
-		var repoClasses : Set(Repository) := pcmRepository.rootObjects()[Repository];
+	var repoClasses : Set(Repository) := pcmRepository.rootObjects()[Repository];
        	var basicComponents : Bag(BasicComponent) := repoClasses.components__Repository[BasicComponent]; 
        	var resourceDemandingSeffs : Bag(ResourceDemandingSEFF) := basicComponents.serviceEffectSpecifications__BasicComponent[ResourceDemandingSEFF];
       	var loopActions:Bag(LoopAction) := resourceDemandingSeffs.steps_Behaviour[LoopAction];
       	var loops=resourceDemandingSeffs.allSubobjects()[LoopAction];
-      	
+      	//collecting all resource demands in order to access the processing types later
       	resourceDemandingSeffs->forEach(seff){
 			seff.allSubobjects()->forEach(action){
 				
@@ -45,7 +45,7 @@ main(){
 				};
 			};
 		};
-		
+	//starts the mapping	
       	resourceDemandingSeffs ->map loopActionToForkAction();
 }
 
@@ -60,9 +60,7 @@ mapping inout ResourceDemandingSEFF::loopActionToForkAction(){
 
 
 /**
-replace each loopaAction with a ForkAction
-other Actions stays the same
-//TODO set predecessor/successor of our new forkAction ?
+Replaces all annotated LoopActions with ForkActions
 */
 helper replaceLoopActionWithForkAction(oldStepsSet:Set(AbstractAction)):Set(AbstractAction){
 
@@ -76,7 +74,7 @@ helper replaceLoopActionWithForkAction(oldStepsSet:Set(AbstractAction)):Set(Abst
 				log("has applyed stereotype **",hasAppliedStereotype(action.oclAsType(LoopAction),PARALLEL_LOOP_ACTION_STEREOTYPE));
 				log("has applyed profile **",isProfileApplied(action.oclAsType(EObject),PARALLEL_LOOP_ACTION_PROFILE));
 				log("Found loopAction replacing it with ForkAction...",action.entityName);
-				
+				//getting the parameters from the emf stereotype
 				var threadPoolSize : Real := getDoubleTaggedValue(action, THREAD_POOL_SIZE, PARALLEL_LOOP_ACTION_STEREOTYPE);
 				var overhead : String := getStringTaggedValue(action,OVERHEAD,PARALLEL_LOOP_ACTION_STEREOTYPE);
 				action := new ForkAction(action.oclAsType(LoopAction),threadPoolSize,overhead,false);
@@ -90,54 +88,48 @@ helper replaceLoopActionWithForkAction(oldStepsSet:Set(AbstractAction)):Set(Abst
 }
 
 /**
-TODO Problem with succesor/predecessor if two newly created Forked actions are behind each other ?
+Creates the new ForkAction, innerTrigger is used to annotate nested fork actions
 */
 constructor ForkAction::ForkAction(aLoop: PCMSEFF::LoopAction,threadPoolSize : Real,overhead:String, innerTrigger: Boolean) {
-
        log ("create fork action for loop" + aLoop.entityName);
-       
        if(not innerTrigger){
-	   		predecessor_AbstractAction := aLoop.predecessor_AbstractAction;
+	   	predecessor_AbstractAction := aLoop.predecessor_AbstractAction;
        		successor_AbstractAction := aLoop.successor_AbstractAction;
-	   }endif;
-	   
-		// pass result~ForkAction bcs we have to set it in the forkAction_SynchronisationPoint Attribute of the SynchronisationPoint 
+	}endif; 
+	// pass result~ForkAction bcs we have to set it in the forkAction_SynchronisationPoint Attribute of the SynchronisationPoint 
        synchronisingBehaviours_ForkAction := new SynchronisationPoint(aLoop,result,threadPoolSize,overhead);
 
 }
 
-
+//Creates a Synchronization point
 constructor SynchronisationPoint::SynchronisationPoint(aLoop : PCMSEFF::LoopAction,aFork : PCMSEFF::ForkAction,threadPoolSize : Real,overhead:String){
-      
        log ("create synchronisation point for loop" + aLoop.entityName);
-
        forkAction_SynchronisationPoint := aFork;
-       
-		//pass result~SynchronisationPoint bcs we have to set it in the synchronisationPoint_ForkedBehaviour Attribute 
-		//of each ForkedBehaviour
+	//pass result~SynchronisationPoint bcs we have to set it in the synchronisationPoint_ForkedBehaviour Attribute 
+	//of each ForkedBehaviour
        synchronousForkedBehaviours_SynchronisationPoint := createForkedBehaviorList(aLoop, aFork, result,threadPoolSize,overhead);
  }
  
 constructor PCMRandomVariable::PCMRandomVariable(spec: String){
     specification := spec;
 }
-
+//hardcoded CPU processing type
 constructor ProcessingResourceType::ProcessingResourceType(){
 	id:="_oro4gG3fEdy4YaaT-RYrLQ";
 	entityName:="CPU";
 }
+//gets the cpu processing type
 query getCPUDemand():ParametricResourceDemand{
-	
 	var resource:ParametricResourceDemand;
 	setOfRes->forEach(demand){
 			if(demand.requiredResource_ParametricResourceDemand.entityName="CPU"){
-			    resource:=demand;
-			    
+			    resource:=demand;   
 				break;
 			}	
 	};
 	return resource;
 }
+//gets the hdd processing type
 query getHDDDemand():ParametricResourceDemand{
 
 	var resource:ParametricResourceDemand;
@@ -149,24 +141,25 @@ query getHDDDemand():ParametricResourceDemand{
 	};
 	return resource;
 }
+//creates the overhead action
 helper createOverheadAction(overhead:String):InternalAction{
-	    var overhead_action:InternalAction=new InternalAction();
+	var overhead_action:InternalAction=new InternalAction();
         overhead_action.entityName:='overhead';
-		var setOfNewResources:Set(ParametricResourceDemand);
-		var resource:ParametricResourceDemand;
-		overhead_action.resourceDemand_Action += new ParametricResourceDemand(getCPUDemand()); 
-		//overhead_action.resourceDemand_Action += new ParametricResourceDemand(getHDDDemand()); 
+	var setOfNewResources:Set(ParametricResourceDemand);
+	var resource:ParametricResourceDemand;
+	overhead_action.resourceDemand_Action += new ParametricResourceDemand(getCPUDemand()); 
+	//overhead_action.resourceDemand_Action += new ParametricResourceDemand(getHDDDemand()); 
 		
-		overhead_action.resourceDemand_Action[ParametricResourceDemand] -> forEach(demand){
-			if(demand.requiredResource_ParametricResourceDemand.entityName="CPU"){
-				demand.specification_ParametericResourceDemand.specification:=overhead;
-			};
+	overhead_action.resourceDemand_Action[ParametricResourceDemand] -> forEach(demand){
+		if(demand.requiredResource_ParametricResourceDemand.entityName="CPU"){
+			demand.specification_ParametericResourceDemand.specification:=overhead;
 		};
+	};
 
        return overhead_action;
 }
 
-
+//gets the first action after the start action
 helper getFirstActionAfterStart(aLoop:LoopAction):AbstractAction{
 	   var store:AbstractAction;
 	   aLoop.bodyBehaviour_Loop.steps_Behaviour[AbstractAction] -> forEach(action){
@@ -177,7 +170,7 @@ helper getFirstActionAfterStart(aLoop:LoopAction):AbstractAction{
 	   store:=store.successor_AbstractAction;
 	   return store;
 }
-
+//converts the actions
 helper convertActions(action:AbstractAction, threadPoolSize:Real, iterationCount:String):AbstractAction{
 	
 	switch {
@@ -214,16 +207,16 @@ helper convertActions(action:AbstractAction, threadPoolSize:Real, iterationCount
 		
 	};
 }
-
+//takes the ordered list and sets the predecessors and successors
 helper setSuccessorAndPredecessor(list:List(AbstractAction)):List(AbstractAction){
-	var count:=0;
+    var count:=0;
     while(count<=list->size()-1){
      	list->at(count).successor_AbstractAction:=list->at(count+1);
        	count:=count+1;
     };
     return list;
 }
-
+//creates a forked behaviour
 constructor ForkedBehaviour::ForkedBehaviour(aLoop : LoopAction,aFork : ForkAction, aSyncPoint : SynchronisationPoint,threadPoolSize : Real, overhead:String) {
 	
         log ("create forked behavour for loop" + aLoop.entityName);
@@ -235,11 +228,11 @@ constructor ForkedBehaviour::ForkedBehaviour(aLoop : LoopAction,aFork : ForkActi
         var stop : StopAction = new StopAction();
         stop.entityName:="stop";
        	
-	    var store:=getFirstActionAfterStart(aLoop);
-		var list:List(AbstractAction);
-		list+=start;
-		var iterationCount:=aLoop.oclAsType(LoopAction).iterationCount_LoopAction.specification;
-		var fork_action:AbstractAction;
+	var store:=getFirstActionAfterStart(aLoop);
+	var list:List(AbstractAction);
+	list+=start;
+	var iterationCount:=aLoop.oclAsType(LoopAction).iterationCount_LoopAction.specification;
+	var fork_action:AbstractAction;
         var action:AbstractAction;
         var setOfResources:Set(ParametricResourceDemand);
         while(not store.oclIsTypeOf(StopAction)){
@@ -260,16 +253,9 @@ constructor StartAction::StartAction(){}
 constructor LoopAction::LoopAction(){}
 constructor StopAction::StopAction(){}
 constructor InternalAction::InternalAction(){}
-
 constructor AbstractAction::AbstractAction(){}
 
 
-/**
-//TODO What if an Internal Action has 
-- infrasructureCall_Action ?
-- resourceCall_Action ?
-- internalFailureOccurenceDescriptions_InternalAction ?
-*/
 constructor InternalAction::InternalAction(oldInternalAction : InternalAction,start:StartAction,stop:StopAction ){
 		entityName:= oldInternalAction.entityName;
 		predecessor_AbstractAction := start;
@@ -322,7 +308,7 @@ constructor PCMRandomVariable::PCMRandomVariable(oldDemand:ParametricResourceDem
 			specification := oldDemand.specification_ParametericResourceDemand.specification + "/" + threadPoolSize.toString();
 			
 }
-
+//creates the required number of forked behaviours
 helper createForkedBehaviorList(aLoop : LoopAction,aFork : ForkAction, aSyncPoint : SynchronisationPoint,threadPoolSize : Real,overhead:String) : Set(ForkedBehaviour) {
 
 			 log("+++ ThradPoolSize",threadPoolSize);
