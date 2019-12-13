@@ -1,7 +1,5 @@
 import org.palladiosimulator.parallelcatalogue.catalog.black.ProfilesLibrary;
 import org.palladiosimulator.architecturaltemplates.catalog.black.PCMLibrary;
-//import de.uka.ipd.sdq.simucomframework.variables.StackContext;
-
 
 modeltype ECORE uses 'http://www.eclipse.org/emf/2002/Ecore';
 modeltype PCM_CORE uses 'http://palladiosimulator.org/PalladioComponentModel/Core/5.2';
@@ -31,7 +29,7 @@ property amountOfOverhead : Real; //TODO change Attributes in emfprofile to real
 property listOfRootObjects : List(NamedElement);
 
 main() {
-		log ("AT Transformation: Fork Join initilized");
+		log ("AT Transformation: Fork Join initialized");
         
 		var repoClasses : Set(Repository) := pcmRepository.rootObjects()[Repository];
        	var basicComponents : Bag(BasicComponent) := repoClasses.components__Repository[BasicComponent]; 
@@ -39,32 +37,28 @@ main() {
       	var loopActions:Bag(ForkAction) := resourceDemandingSeffs.steps_Behaviour[ForkAction];
       	var loops=resourceDemandingSeffs.allSubobjects()[ForkAction];
       	
+		//Collecting all ressource demands in order to access the processing types later  
 		resourceDemandingSeffs->forEach(seff){
 			seff.allSubobjects()->forEach(action){
-				
 				if(action.oclIsTypeOf(InternalAction)){
 					setOfRes+=action.oclAsType(InternalAction).resourceDemand_Action;
 				};
 			};
 		};
 		
-      	resourceDemandingSeffs ->map ForkActionBeforeToForkActionAfter();
-		
+      	resourceDemandingSeffs ->map ForkActionBeforeToForkActionAfter();	
 };
       	
 mapping inout ResourceDemandingSEFF::ForkActionBeforeToForkActionAfter(){
-	
 	self.steps_Behaviour := replaceOldForkWithNewFork(self.steps_Behaviour);
 }
-helper removeResourceContainer(list : List(ProcessingResourceType)){
-	list->forEach(res){
-		
-		delete(listOfRootObjects,res); 
-	};
-}
 
+/*
+ * Replaces the old ForkAction with a new one
+ *
+ * @param oldStepsSet: All actions of the SEFF
+ */
 helper replaceOldForkWithNewFork(oldStepsSet:Set(AbstractAction)):Set(AbstractAction){
-
 	var modifiedStepsSet: Set(AbstractAction);
 	
 	oldStepsSet -> forEach(action){
@@ -74,69 +68,85 @@ helper replaceOldForkWithNewFork(oldStepsSet:Set(AbstractAction)):Set(AbstractAc
 				if(isProfileApplied(behaviour.oclAsType(EObject),FORK_JOIN_ACTION_PROFILE) and
 					hasAppliedStereotype(behaviour.oclAsType(EObject),FORK_JOIN_ACTION_STEREOTYPE)){
 					list+=behaviour;
-				};
-				
-			
+				};			
 			};
 			if(list->size()>0){
-					action := new ForkAction(action.oclAsType(ForkAction),list,false);
+					action := new ForkAction(action.oclAsType(ForkAction),list);
 			};
 		};
-		
 		modifiedStepsSet += action;
 	};
-	
 	return modifiedStepsSet;
 }
 
-//constructor ForkAction::ForkAction(aFork: PCMSEFF::ForkAction,threadPoolSize : Real,overhead:String, innerTrigger: Boolean) {
-constructor ForkAction::ForkAction(aFork: PCMSEFF::ForkAction,list:List(ForkedBehaviour), innerTrigger: Boolean) {
-      
-       
-       if(not innerTrigger){
-	   		predecessor_AbstractAction := aFork.predecessor_AbstractAction;
-       		successor_AbstractAction := aFork.successor_AbstractAction;
-	   }endif;
-	   
+/*
+ * Creates a new ForkAction from the old ForkAction
+ *
+ * @param aFork: Existing ForkAction
+ * @param list: List with all annotated ForkedBehaviour´s
+ */
+constructor ForkAction::ForkAction(aFork: PCMSEFF::ForkAction,list:List(ForkedBehaviour)) {
+	   	predecessor_AbstractAction := aFork.predecessor_AbstractAction;
+       	successor_AbstractAction := aFork.successor_AbstractAction;
 		// pass result~ForkAction bcs we have to set it in the forkAction_SynchronisationPoint Attribute of the SynchronisationPoint 
-       synchronisingBehaviours_ForkAction := new SynchronisationPoint(aFork,result,list);
+       synchronisingBehaviours_ForkAction := new SynchronisationPoint(result,list);
 }
-constructor SynchronisationPoint::SynchronisationPoint(aForkOld : PCMSEFF::ForkAction,aFork : PCMSEFF::ForkAction,list:List(ForkedBehaviour)){
-      
-     
 
+/*
+ * Creates a new SynchronisationPoint
+ *
+ * @param aFork: ForkAction, the SynchronisationPoint is created for 
+ * @oaram list: List with ForkedBehaviour´s
+ */
+constructor SynchronisationPoint::SynchronisationPoint(aFork:PCMSEFF::ForkAction, list:List(ForkedBehaviour)){
        forkAction_SynchronisationPoint := aFork;
        
 		//pass result~SynchronisationPoint bcs we have to set it in the synchronisationPoint_ForkedBehaviour Attribute 
 		//of each ForkedBehaviour
-       synchronousForkedBehaviours_SynchronisationPoint := createForkedBehaviorList(aForkOld, aFork, result,list);
+       synchronousForkedBehaviours_SynchronisationPoint := createForkedBehaviorList(aFork, result,list);
  }
-helper createForkedBehaviorList(aForkOld : ForkAction,aFork : ForkAction, aSyncPoint : SynchronisationPoint,list:List(ForkedBehaviour)) : Set(ForkedBehaviour) {
 
-      var list_return : Set(ForkedBehaviour);
-			
-			list->forEach(behaviour){
-				var threadPoolSize : Real := getDoubleTaggedValue(behaviour.oclAsType(EObject), THREAD_POOL_SIZE, FORK_JOIN_ACTION_STEREOTYPE);
-				var overhead : String := getStringTaggedValue(behaviour.oclAsType(EObject),OVERHEAD,FORK_JOIN_ACTION_STEREOTYPE);
-				var counter1:=1;
-				while(counter1<=threadPoolSize){
-					list_return+=new ForkedBehaviour(aForkOld, aFork, aSyncPoint,overhead,behaviour);
-					counter1:=counter1+1;
-				};
-			};
-			
-			
-             return list_return; 
+/*
+ * Takes the initial ForkedBehaviour´s from the ForkAction, checks which are annotated, creates the respective number of copies and returns a list with the copies.
+ *
+ * @param aFork: ForkAction, whose ForkedBehaviour´s are checked for annotation
+ * @param aSyncPoint: Synchronized Point of the ForkAction
+ * @param list: Initial ForkedBehaviour´s 
+ * @returns the list with the copies
+ */
+helper createForkedBehaviorList(aFork:ForkAction, aSyncPoint:SynchronisationPoint, list:List(ForkedBehaviour)):Set(ForkedBehaviour) {
 
+    var list_return : Set(ForkedBehaviour);
+			
+	list->forEach(behaviour){
+		var threadPoolSize : Real := getDoubleTaggedValue(behaviour.oclAsType(EObject), THREAD_POOL_SIZE, FORK_JOIN_ACTION_STEREOTYPE);
+		var overhead : String := getStringTaggedValue(behaviour.oclAsType(EObject),OVERHEAD,FORK_JOIN_ACTION_STEREOTYPE);
+		var counter1:=1;
+		while(counter1<=threadPoolSize){
+			list_return+=new ForkedBehaviour(aFork, aSyncPoint,overhead,behaviour);
+			counter1:=counter1+1;
+		};
+	};
+	return list_return; 
 }
-constructor ForkedBehaviour::ForkedBehaviour(aForkOld : ForkAction,aFork : ForkAction, aSyncPoint : SynchronisationPoint, overhead:String,behaviour:ForkedBehaviour) {
-	
-       
+
+/* 
+ * Creates whole ForkedBehaviour with StartAction and StopAction and Actions between.
+ *
+ * @param aFork: ForkAction containing all ForkedBehaviour´s
+ * @param aSyncPoint: Synchronized Point of the ForkAction
+ * @param overhead: Value of overhead parameter
+ * @param behaviour: Annotated behaviours, to be transformed
+ */
+constructor ForkedBehaviour::ForkedBehaviour(aFork:ForkAction, aSyncPoint:SynchronisationPoint, overhead:String, behaviour:ForkedBehaviour) {
         forkAction_ForkedBehaivour := aFork;       
         synchronisationPoint_ForkedBehaviour := aSyncPoint;
 
+		//Creation StartAction
         var start : StartAction = new StartAction();
         start.entityName:="start";
+
+		//Creation StopAction
         var stop : StopAction = new StopAction();
         stop.entityName:="stop";
        	
@@ -156,15 +166,18 @@ constructor ForkedBehaviour::ForkedBehaviour(aForkOld : ForkAction,aFork : ForkA
        		store:=store.successor_AbstractAction;
        		counter:=counter+1;
        };
-      
        list+=createOverheadAction(overhead);
-       
        list+=stop;
        list := setSuccessorAndPredecessor(list);
-     
-       steps_Behaviour:=list;
-              
+       steps_Behaviour:=list;           
 }
+
+/*
+ * Iterates through all actions of the ForkedBehaviour and finds the StartAction
+ *
+ * @param behavior: The ForkedBehavior, where the StartAction is needed from
+ * @returns the StartAction
+ */
 helper getFirstActionAfterStart(behaviour:ForkedBehaviour):AbstractAction{
 	   var store:AbstractAction;
 	   behaviour.steps_Behaviour -> forEach(action){
@@ -175,6 +188,13 @@ helper getFirstActionAfterStart(behaviour:ForkedBehaviour):AbstractAction{
 	   store:=store.successor_AbstractAction;
 	   return store;
 }
+
+/*
+ * Creates a new InternalAction for the overhead and sets the resources.
+ *
+ * @param overhead: value of overhead ParametricResourceDemand
+ * @returns the overhead action
+ */
 helper createOverheadAction(overhead:String):InternalAction{
 	    var overhead_action:InternalAction=new InternalAction();
         overhead_action.entityName:='overhead';
@@ -187,45 +207,41 @@ helper createOverheadAction(overhead:String):InternalAction{
 			if(demand.requiredResource_ParametricResourceDemand.entityName="CPU"){
 				demand.specification_ParametericResourceDemand.specification:=overhead;
 			};
+
+// Optional, if HDD overhead should be modeled		
 //			if(demand.requiredResource_ParametricResourceDemand.entityName="HDD"){
-//				demand.specification_ParametericResourceDemand.specification:="111";
+//				demand.specification_ParametericResourceDemand.specification:="--placeholder--";
 //			}
 		};
-
        return overhead_action;
 }
 
+/*
+ * Iterates through given AbstractAction List and sets the successor and predecessor actions.
+ *
+ * @param list: List with AbstractAction´s
+ * @returns the final list with connected AbstractAction´s 
+ */
 helper setSuccessorAndPredecessor(list:List(AbstractAction)):List(AbstractAction){
 	var count:=1;
     while(count<=list->size()-1){
-    	//log(list->at(count).entityName);
      	list->at(count).successor_AbstractAction:=list->at(count+1);
        	count:=count+1;
     };
     return list;
 }
-constructor InternalAction::InternalAction(oldInternalAction : InternalAction){
-		entityName:= oldInternalAction.entityName;
-		resourceDemandingBehaviour_AbstractAction := oldInternalAction.resourceDemandingBehaviour_AbstractAction;
-		oldInternalAction.resourceDemand_Action -> forEach(oldResDemandAction){
-		resourceDemand_Action += new ParametricResourceDemand(oldResDemandAction,result);
-		//setOfRes+=oldInternalAction.resourceDemand_Action;
-		}
-}
-constructor ParametricResourceDemand::ParametricResourceDemand(oldParametricResourceDemand : ParametricResourceDemand, aInternalAction :InternalAction){
 
-	action_ParametricResourceDemand := oldParametricResourceDemand.action_ParametricResourceDemand;
-	requiredResource_ParametricResourceDemand := oldParametricResourceDemand.requiredResource_ParametricResourceDemand; 
-	specification_ParametericResourceDemand:= new PCMRandomVariable(oldParametricResourceDemand);
-	
-}
+/*
+ * Constructor for ParametricResourceDemand, creating copy of an given old ParametricResourceDemand
+ *
+ * @param oldParametricResourceDemand: The ParametricResourceDemand to be copied
+ */
 constructor ParametricResourceDemand::ParametricResourceDemand(oldParametricResourceDemand : ParametricResourceDemand){
-
 	action_ParametricResourceDemand := oldParametricResourceDemand.action_ParametricResourceDemand;
 	requiredResource_ParametricResourceDemand := oldParametricResourceDemand.requiredResource_ParametricResourceDemand; 
 	specification_ParametericResourceDemand:= new PCMRandomVariable(oldParametricResourceDemand);
-	
 }
+
 constructor PCMRandomVariable::PCMRandomVariable(oldParametricResourceDemand : ParametricResourceDemand){
 			//not possible to change values here directly
 			//expression is read-only
@@ -236,13 +252,15 @@ constructor PCMRandomVariable::PCMRandomVariable(oldParametricResourceDemand : P
 			specification := oldParametricResourceDemand.specification_ParametericResourceDemand.specification;
 			
 }
+
+/*
+ * Used to get the ParametricResourceDemand for a CPU Resource Type.
+ */
 query getCPUDemand():ParametricResourceDemand{
-	
 	var resource:ParametricResourceDemand;
 	setOfRes->forEach(demand){
 			if(demand.requiredResource_ParametricResourceDemand.entityName="CPU"){
 			    resource:=demand;
-			   
 				break;
 			}	
 	};
