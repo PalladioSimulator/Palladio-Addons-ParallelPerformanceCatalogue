@@ -77,4 +77,13 @@ Execute the following steps on the System model:
 
 ## Fork-Join AT
 
-TODO
+
+
+How to create a Fork Action:
+1. Go to the SEFF diagra.
+2. Select the Fork Action from the palette
+3. Add a Synchronization Point from the palette to the Fork Action
+4. Add a Resource Demanding Behavior from the palette and add it to the Synchronization Point.
+5. Now create your actions inside the Resource Demanding Behavior
+
+Repeat steps 4 and 5 according to wished number of threads.
