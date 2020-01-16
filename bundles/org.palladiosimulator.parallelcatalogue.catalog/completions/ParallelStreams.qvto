@@ -105,13 +105,6 @@ main() {
 		
 		headComp:=findHeadComponent(annotatedComponents,headInt);
 		
-//		annotatedComponents->forEach(comp){
-//	    		comp.oclAsType(InterfaceProvidingEntity).providedRoles_InterfaceProvidingEntity->forEach(role){
-//	    			if(role.oclAsType(OperationProvidedRole).providedInterface__OperationProvidedRole=headInt.oclAsType(OperationInterface)){
-//	    				headComp:=comp;
-//	    			};
-//	    		}
-//	    };
 	    
 	    var headAssemblyContext:AssemblyContext;
 	    system.assemblyContexts__ComposedStructure->forEach(context){
@@ -150,16 +143,13 @@ main() {
 				
 				allComponents+=newComp;
 				var newAssemblyContext:=new AssemblyContext(newComp);
-//				newAssemblyContext.encapsulatedComponent__AssemblyContext:=newComp;
-//				newAssemblyContext.entityName:="Assembly_"+newComp.entityName;
-//				system.assemblyContexts__ComposedStructure+=newAssemblyContext;
+
 				var allocContext : AllocationContext := new AllocationContext(newAssemblyContext, findResourceContainer(headAssemblyContext));
 
 			};
+			//creates the interfaces
 			annotatedInterfaces->forEach(int){
 				var newInt:=new OperationInterface(int.entityName+"."+counter.toString());
-				//newInt.entityName:=int.entityName+"."+counter.toString();
-				
 				
 				var signature:OperationSignature;
 				int.oclAsType(OperationInterface).signatures__OperationInterface->forOne(sig){
@@ -175,10 +165,11 @@ main() {
 				if(newInt.entityName=headInt.entityName+"."+counter.toString()){
 					headInterfaces+=newInt;
 				};
+				//creates the provided roles
 				annotatedComponents->forEach(comp){
 					comp.oclAsType(InterfaceProvidingEntity).providedRoles_InterfaceProvidingEntity->forEach(role){
 						if(role.oclAsType(OperationProvidedRole).providedInterface__OperationProvidedRole.entityName=int.entityName){
-							//var provRole:=new OperationProvidedRole();
+							
 							
 							copiedComponents->forEach(copiedComp){
 								
@@ -186,9 +177,7 @@ main() {
 									var provRole:=new OperationProvidedRole(copiedComp.entityName+"."+newInt.entityName+".OperationProvidedRole1",
 									newInt.oclAsType(OperationInterface),
 									copiedComp);
-//									provRole.providingEntity_ProvidedRole:=copiedComp;		
-//									provRole.providedInterface__OperationProvidedRole:=newInt;
-//									provRole.entityName:=copiedComp.entityName+"."+newInt.entityName+".OperationProvidedRole1";
+
 								};
 							};
 							
@@ -196,19 +185,16 @@ main() {
 						};
 					};
 					
-					
+					//creates the required roles
 					comp.oclAsType(InterfaceRequiringEntity).requiredRoles_InterfaceRequiringEntity->forEach(role){
 						if(role.oclAsType(OperationRequiredRole).requiredInterface__OperationRequiredRole.entityName=int.entityName){
-							//var reqRole:=new OperationRequiredRole();
-							
+
 							copiedComponents->forEach(copiedComp){
 								if(copiedComp.entityName=comp.entityName+"."+counter.toString()){
 									var reqRole:=new OperationRequiredRole(copiedComp.entityName+"."+newInt.entityName+".OperationRequiredRole1",
 									newInt.oclAsType(OperationInterface),
 									copiedComp);
-//									reqRole.requiringEntity_RequiredRole:=copiedComp;		
-//									reqRole.requiredInterface__OperationRequiredRole:=newInt;
-//									reqRole.entityName:=copiedComp.entityName+"."+newInt.entityName+".OperationRequiredRole1";
+
 								};
 							};
 							
@@ -224,38 +210,9 @@ main() {
 			annotatedComponents->forEach(comp1){
 				copiedComponents->forEach(comp2){
 					comp2->copySeffDiagram(comp1,counter);
-//					if(comp1.entityName+"."+counter.toString()=comp2.entityName){
-//						comp1.serviceEffectSpecifications__BasicComponent->forEach(seff){
-//							var placeholderSEFF:ServiceEffectSpecification;
-//							placeholderSEFF:=seff.deepclone();
-//							
-//							//comp2.serviceEffectSpecifications__BasicComponent+=seff.deepclone();
-//							
-//							comp2.providedRoles_InterfaceProvidingEntity->forOne(role){
-//								role.oclAsType(OperationProvidedRole).providedInterface__OperationProvidedRole.signatures__OperationInterface->forOne(sig){
-//									placeholderSEFF.describedService__SEFF:=sig;
-//								};
-//							};
-//							comp2.serviceEffectSpecifications__BasicComponent:=placeholderSEFF;
-//							comp2.serviceEffectSpecifications__BasicComponent.oclAsType(ResourceDemandingBehaviour).steps_Behaviour->forEach(action){
-//								var placeholerAction:AbstractAction;
-//								action.id:=placeholerAction.id;
-//								if(action.oclIsTypeOf(ExternalCallAction)){
-//								
-//									comp2.requiredRoles_InterfaceRequiringEntity->forOne(role){
-//										action.oclAsType(ExternalCallAction).role_ExternalService:=role.oclAsType(OperationRequiredRole);
-//										role.oclAsType(OperationRequiredRole).requiredInterface__OperationRequiredRole.signatures__OperationInterface->forOne(sig){
-//											action.oclAsType(ExternalCallAction).calledService_ExternalService:=sig;
-//										};
-//									};
-//								};
-//							};
-//						}
-//					};
 				};
 			};
-			log("SIZE "+ counter.toString()+" "+copiedComponents->size().toString());
-			//var duplicateSet:Set(String);
+			//creates and sets the assembly connectors
 			copiedComponents->forEach(component1){
 				component1.requiredRoles_InterfaceRequiringEntity->forOne(reqRole){
 					copiedComponents->forEach(component2){
@@ -278,15 +235,7 @@ main() {
 										assembly2:=context;
 									};
 								};
-								//
-//								var connector:=new AssemblyConnector(assembly2,assembly1,provRole.oclAsType(OperationProvidedRole),
-//									reqRole.oclAsType(OperationRequiredRole));
-//								connector.providedRole_AssemblyConnector:=provRole.oclAsType(OperationProvidedRole);
-//								connector.requiredRole_AssemblyConnector:=reqRole.oclAsType(OperationRequiredRole);
-//								connector.requiringAssemblyContext_AssemblyConnector:=assembly1;
-//								connector.providingAssemblyContext_AssemblyConnector:=assembly2;
-//								system.connectors__ComposedStructure+=connector;
-								
+
 								var connector:=new AssemblyConnector(assembly2,assembly1,provRole.oclAsType(OperationProvidedRole),reqRole.oclAsType(OperationRequiredRole));
 								
 								
@@ -305,13 +254,6 @@ main() {
 			var counter3:=1;
 			
 			
-//			while(counter3<=copiedComponents->size()){
-//				log("DELETE "+counter3.toString());
-//				copiedComponents->asList()->removeAt(counter3);
-//				copiedInterfaces->asList()->removeAt(counter3);
-//				counter3:=counter3+1;
-//			};
-			
 			copiedComponents:=null;
 			copiedInterfaces:=null;
 			
@@ -319,44 +261,26 @@ main() {
 		};
 	    
 	    
-	    
-	    var forkInt:=new OperationInterface("ForkInterface");
-       	//forkInt.entityName:="ForkInterface";
+	//creates the fork interface
+	var forkInt:=new OperationInterface("ForkInterface");
        	var forkSig:= new OperationSignature("forkStart",forkInt);
-//       	forkSig.entityName:="forkStart";
-//       	forkSig.interface__OperationSignature:=forkInt;
-       	
-       	
-       	var forkComp:=new BasicComponent("ForkComponent");
-       	//forkComp.entityName:="ForkComponent";
-       	
+       	var forkComp:=new BasicComponent("ForkComponent");     	
        	var startRole:=new OperationProvidedRole("ForkComponentProvidedRole",forkInt,forkComp);
-//       	startRole.entityName:="ForkComponentProvidedRole";
-//       	startRole.providedInterface__OperationProvidedRole:=forkInt;
-//       	startRole.providingEntity_ProvidedRole:=forkComp;
-       	
        	headInterfaces->forEach(int){
        		var startReqRole:= new OperationRequiredRole("ForkComponent."+int.entityName+".RequiredRole",int.oclAsType(OperationInterface),forkComp);
-//       	    startReqRole.entityName:="ForkComponent."+int.entityName+".RequiredRole";
-//       	    startReqRole.requiredInterface__OperationRequiredRole:=int.oclAsType(OperationInterface);
-//       	    startReqRole.requiringEntity_RequiredRole:=forkComp;
-       	    
+
        	};
 		
 		forkComp.serviceEffectSpecifications__BasicComponent:=createStartCall(forkComp,forkSig,headInterfaces,asynchronous);
 		
 		var forkAssembly:=new AssemblyContext(forkComp);
-//		forkAssembly.encapsulatedComponent__AssemblyContext:=forkComp;
-//		forkAssembly.entityName:="Assembly_"+forkComp.entityName;	
-//		system.assemblyContexts__ComposedStructure+=forkAssembly;
-		
+
 		
 		var allocContext : AllocationContext := new AllocationContext(forkAssembly, findResourceContainer(headAssemblyContext));
 		
-		
+		//creates the fork assembly connectors
 		allComponents->forEach(component){
-			//log(component.entityName);
-			//log(annotatedComponents->asList()->includes(component).toString());
+
 			if(not annotatedComponents->asList()->includes(component)){
 			
 				component.requiredRoles_InterfaceRequiringEntity->forEach(role){
@@ -377,11 +301,7 @@ main() {
 										};
 									};
 									var connector:=new AssemblyConnector(forkAssembly,componentAssembly,startRole,role.oclAsType(OperationRequiredRole));
-//									connector.requiringAssemblyContext_AssemblyConnector:=componentAssembly;
-//									connector.providingAssemblyContext_AssemblyConnector:=forkAssembly;
-//									connector.requiredRole_AssemblyConnector:=role.oclAsType(OperationRequiredRole);
-//									connector.providedRole_AssemblyConnector:=startRole;
-//									system.connectors__ComposedStructure+=connector;
+
 								};
 							};
 						};
@@ -390,7 +310,7 @@ main() {
 			};
 		};
 		
-		
+		//deletes the original connectors
 		var headContext:AssemblyContext;
 		system.connectors__ComposedStructure->forEach(connector){
 			
@@ -404,25 +324,21 @@ main() {
 			};	
 		};
 		
+		//creates the connector from the interface to the fork assemly
 		headInterfaces->forEach(interface){
 			allComponents->forEach(component){
 				component.providedRoles_InterfaceProvidingEntity->forEach(role){
 					if(role.oclAsType(OperationProvidedRole).providedInterface__OperationProvidedRole=interface){
 						system.assemblyContexts__ComposedStructure->forEach(context){
 							if(context.entityName="Assembly_"+component.entityName){
-//								var assemblyConnector:=new AssemblyConnector();
-//								assemblyConnector.providingAssemblyContext_AssemblyConnector:=context;
-//								assemblyConnector.requiringAssemblyContext_AssemblyConnector:=forkAssembly;
-//								assemblyConnector.providedRole_AssemblyConnector:=role.oclAsType(OperationProvidedRole);
-								
+
 								var placeholder:RequiredRole;
 								forkComp.requiredRoles_InterfaceRequiringEntity->forEach(reqRole){
 									if(reqRole.oclAsType(OperationRequiredRole).requiredInterface__OperationRequiredRole=interface){
 										placeholder:=reqRole;
 									};
 								};
-								//assemblyConnector.requiredRole_AssemblyConnector:=placeholder.oclAsType(OperationRequiredRole);
-								//system.connectors__ComposedStructure+=assemblyConnector;
+
 								
 								var assemblyConnector:=new AssemblyConnector(context,forkAssembly,role.oclAsType(OperationProvidedRole),
 								placeholder.oclAsType(OperationRequiredRole));
@@ -473,6 +389,7 @@ constructor OperationRequiredRole::OperationRequiredRole(roleName:String, requir
 
 };
 
+//creates the starting external calls in the fork component
 helper createStartCall(component:BasicComponent,forkSig:Signature,headInterfaces:Set(Interface),async:Boolean):ResourceDemandingSEFF{
 	var startAction:=new StartAction();
 	var stopAction:=new StopAction();
@@ -551,7 +468,7 @@ query findResourceContainer(assemblyContext : AssemblyContext) : ResourceContain
 		).resourceContainer_AllocationContext;
 };
 
-
+//mapping that sets the seff diagram of a component
 mapping inout BasicComponent::copySeffDiagram(comp1:BasicComponent,counter:Integer){
 	if(comp1.entityName+"."+counter.toString()=self.entityName){
 		comp1.serviceEffectSpecifications__BasicComponent->forEach(seff){
@@ -579,7 +496,7 @@ mapping inout BasicComponent::copySeffDiagram(comp1:BasicComponent,counter:Integ
 		};
 };
 
-
+//finds the first component in the pipeline
 helper findHeadComponent(annotatedComponents:Set(BasicComponent),headInt:Interface):BasicComponent{
 	annotatedComponents->forEach(comp){
 	    		comp.oclAsType(InterfaceProvidingEntity).providedRoles_InterfaceProvidingEntity->forEach(role){
