@@ -60,8 +60,11 @@ mapping inout ResourceDemandingSEFF::loopActionToForkAction(){
 
 
 /**
-Replaces all annotated LoopActions with ForkActions
+* Replaces all annotated LoopActions with ForkActions
+* @param oldStepsSet: a set containing all AbstractActions from the SEFF diagram
+* @returns a modified set after the transformation
 */
+
 helper replaceLoopActionWithForkAction(oldStepsSet:Set(AbstractAction)):Set(AbstractAction){
 
 	var modifiedStepsSet: Set(AbstractAction);
@@ -88,8 +91,13 @@ helper replaceLoopActionWithForkAction(oldStepsSet:Set(AbstractAction)):Set(Abst
 }
 
 /**
-Creates the new ForkAction, innerTrigger is used to annotate nested fork actions
+* Creates the new ForkAction, innerTrigger is used to annotate nested fork actions
+* @param aLoop: The loop action to be transformed
+* @param threadPoolSize: the thread pool size variable from the profile
+* @paramov overhead: the overhead size variable from the profile
+* @param innerTrigger: a boolean variable set to true if the loop that is transformed is nested in another one, i.e. inner loop
 */
+
 constructor ForkAction::ForkAction(aLoop: PCMSEFF::LoopAction,threadPoolSize : Real,overhead:String, innerTrigger: Boolean) {
        log ("create fork action for loop" + aLoop.entityName);
        if(not innerTrigger){
@@ -101,7 +109,13 @@ constructor ForkAction::ForkAction(aLoop: PCMSEFF::LoopAction,threadPoolSize : R
 
 }
 
-//Creates a Synchronization point
+/**
+* Creates the new synchronization point
+* @param aLoop: The loop action to be transformed
+* @param threadPoolSize: the thread pool size variable from the profile
+* @param overhead: the overhead size variable from the profile
+* @param aFork: the fork action for which the synchronization point is created
+*/
 constructor SynchronisationPoint::SynchronisationPoint(aLoop : PCMSEFF::LoopAction,aFork : PCMSEFF::ForkAction,threadPoolSize : Real,overhead:String){
        log ("create synchronisation point for loop" + aLoop.entityName);
        forkAction_SynchronisationPoint := aFork;
@@ -159,7 +173,7 @@ helper createOverheadAction(overhead:String):InternalAction{
        return overhead_action;
 }
 
-//gets the first action after the start action
+//gets the first action after the start action of a loop
 helper getFirstActionAfterStart(aLoop:LoopAction):AbstractAction{
 	   var store:AbstractAction;
 	   aLoop.bodyBehaviour_Loop.steps_Behaviour[AbstractAction] -> forEach(action){
@@ -170,7 +184,12 @@ helper getFirstActionAfterStart(aLoop:LoopAction):AbstractAction{
 	   store:=store.successor_AbstractAction;
 	   return store;
 }
-//converts the actions
+/**
+* Converts the existing actions into new actions with adjusted workloads
+* @param action: the action being converted
+* @param threadPoolSize: the thread pool size variable from the profile
+* @param iterationCount: the number of iterations of the given loop
+*/
 helper convertActions(action:AbstractAction, threadPoolSize:Real, iterationCount:String):AbstractAction{
 	
 	switch {
@@ -216,7 +235,14 @@ helper setSuccessorAndPredecessor(list:List(AbstractAction)):List(AbstractAction
     };
     return list;
 }
-//creates a forked behaviour
+/**
+* Creates a new forked behaviour and populates it with actions
+* @param aLoop: The loop action to be transformed
+* @param threadPoolSize: the thread pool size variable from the profile
+* @param overhead: the overhead size variable from the profile
+* @param aFork: the newly created fork action
+* @param aFork: the newly created synchronization point
+*/
 constructor ForkedBehaviour::ForkedBehaviour(aLoop : LoopAction,aFork : ForkAction, aSyncPoint : SynchronisationPoint,threadPoolSize : Real, overhead:String) {
 	
         log ("create forked behavour for loop" + aLoop.entityName);
