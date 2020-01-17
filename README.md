@@ -77,13 +77,60 @@ Execute the following steps on the System model:
 
 ## Fork-Join AT
 
+The concept of this approach is that a task with a bigger workload can be forked, i.e., split into several tasks with a smaller workload, which are then executed in parallel. After the execution of all parallel threads completes, the execution can return to its original state, i.e., join.
 
+The Fork-Join AT in the Parallel Performance Catalogue solves the efficiency problems of the standard toolkit and eliminates the manual modeling work by allowing the users to model only a single thread and to create copies of it simply by applying the AT and specifying the number of copies. 
 
-How to create a Fork Action:
-1. Go to the SEFF diagra.
+#### How to create a Fork Action:
+1. Go to the SEFF diagram
 2. Select the Fork Action from the palette
 3. Add a Synchronization Point from the palette to the Fork Action
 4. Add a Resource Demanding Behavior from the palette and add it to the Synchronization Point.
 5. Now create your actions inside the Resource Demanding Behavior
 
-Repeat steps 4 and 5 according to wished number of threads.
+Afterwards, you fork action should look like this:
+
+![](https://i.imgur.com/55ArGa4.png)
+
+
+#### How to apply the Fork Join AT:
+
+Execute the following steps on the System model: 
+
+1. Choose **Add Architectural Template** from the palette and click on the **defaultSystem** to apply a template on your system.
+1. In the popup, choose the **AT Fork Join** Architectural Template to apply the template. Confirm with **OK**.
+
+![](https://i.imgur.com/tUP6Fwx.png)
+
+
+3. The system is now enabled for the Fork Join Architectural Template. Whenever we want to work with an Architectural Template, enabling it for the system is the first step. The editor for the system illustrates the Architectural Template application with a grey box.
+
+![](https://i.imgur.com/QWxY300.png)
+
+
+4. Right click on the project and select refresh.
+
+![](https://i.imgur.com/VfvP4SM.png)
+
+
+5. Select the repository in the tree editor, right click on it and select apply profile. Find and select the Fork Join profile. Click Add and then OK. Refresh the project.
+
+![](https://i.imgur.com/KmawU1o.png)
+
+![](https://i.imgur.com/ijYVe9Q.png)
+
+
+6. Select the forked behavior in the tree editor, right click on it and select apply stereotype. Select the stereotype, click add and then OK. Refresh the project.
+
+![](https://i.imgur.com/wR2KJYL.png)
+
+![](https://i.imgur.com/Snq6ASQ.png)
+
+
+7. Select the stereotype, switch to properties view and specify the AT parameters.
+
+![](https://i.imgur.com/p5S4vvv.png)
+
+![](https://i.imgur.com/WoXDeLo.png)
+
+8. The AT is now successfully applied.
