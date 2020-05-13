@@ -134,3 +134,43 @@ Execute the following steps on the System model:
 ![](https://i.imgur.com/WoXDeLo.png)
 
 8. The AT is now successfully applied.
+
+
+## Parallel Streams AT
+
+The Pipes \& Filters is an approach that brings parallelism to data streams, where each stream consists of filters that represent computational steps and pipes which represent the flow between the filters. Defining characteristics of the approach are the expandability and interchangeability since filters can be easily added or removed.
+
+The Parallel Streams AT in the Parallel Performance Catalogue allows the users to model only a single parallel pipeline and to create multiple copies of it automatically. The AT creates all the necessary components in all diagrams, the connections between them, and the threads in which the pipelines will be executed.
+
+#### How to apply the Parallel Streams AT
+
+1. Create a single pipeline in your project. The pipeline consists of components and their respective interfaces. Each component in the pipeline should be calling the functionality of the next component with an external call action. The following image shows what such a pipeline looks like:
+![](https://i.imgur.com/ESCUrmR.png)
+
+![](https://i.imgur.com/RqgCow8.png)
+
+
+2. Choose **Add Architectural Template** from the palette and click on the **defaultSystem** to apply a template on your system. In the popup choose the Parallel Streams AT and apply it to your system diagram.
+![](https://i.imgur.com/ZLgwMbf.png)
+
+3. Apply the Parallel Streams Profile to the repository diagram.
+![](https://i.imgur.com/FgUhPZx.png)
+![](https://i.imgur.com/sLoCM3t.png)
+
+
+
+4. Apply the PipelineHeadAction to the first interface of your pipeline.
+![](https://i.imgur.com/joghoJI.png)
+![](https://i.imgur.com/MqJ7LKL.png)
+
+5. Apply the PipelineAction stereotype to all remainig interfaces and components of your pipeline.
+
+6. Select the PipelineHeadAction Stereotype in the repository diagram. Set your parameters.
+
+![](https://i.imgur.com/szqOQAy.png)
+![](https://i.imgur.com/yohnIQc.png)
+
+7. You have successfully applied the Parallel Streams AT.
+
+
+
