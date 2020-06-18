@@ -2,7 +2,7 @@
 <feature
       id="org.palladiosimulator.parallelcatalogue.feature"
       label="Parallel Performance Catalogue"
-      version="1.0.0.qualifier"
+      version="4.3.0.qualifier"
       provider-name="palladiosimulator.org"
       plugin="org.palladiosimulator.branding"
       license-feature="org.palladiosimulator.license"
