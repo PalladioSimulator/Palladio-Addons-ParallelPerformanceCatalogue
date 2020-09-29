@@ -10,13 +10,14 @@ modeltype PCM_COMPLETION uses 'http://palladiosimulator.org/AnalyzerFramework/Co
 modeltype PCMSEFF_PERFORMANCE uses pcm::seff::seff_performance('http://palladiosimulator.org/PalladioComponentModel/SEFF/5.2');
 modeltype PCM_ALLOC uses 'http://palladiosimulator.org/PalladioComponentModel/Allocation/5.2';
 modeltype PCM_Repository uses 'http://palladiosimulator.org/PalladioComponentModel/Repository/5.2';
+modeltype PCM_ResEnv uses 'http://palladiosimulator.org/PalladioComponentModel/ResourceEnvironment/5.2';
 modeltype PCM_RESOURCE uses pcm::resourcetype;
 modeltype STOEX uses stoex;
 modeltype PROBFUNC uses probfunction;
 
 
 //Inout model is defined and passed from AtCatalog-> role XYZ -> qvto ->pcm blackboard-> pcm file Extension
-transformation ParallelLoop(inout pcmRepository : PCM_Repository);
+transformation ParallelLoop(inout pcmRepository : PCM_Repository, inout pcmResEnv: PCM_ResEnv);
 
 property setOfRes:Set(ParametricResourceDemand);
 property hardcode:ParametricResourceDemand;
@@ -27,16 +28,49 @@ property numberOfWorkerThreads : Integer;
 property OVERHEAD : String = "overhead";
 property amountOfOverhead : Real; //TODO change Attributes in emfprofile to real
 
+
+
+
+property NUMBER_OF_HYPER_THREADS_AVAIL : String = "numberOfHyperThreadsAvail";
+property REFEREMCE_CURVE : String = "referenceCurve";
+property STAGE_OF_THREADS: String ="stageOfThreads";
+
+property numberOfCoresUsed: Real;
+property executionOneThread: Real ;
+property numberOfHyperThreadsAvail: Real ;
+property referenceCurve : String ;
+property stageOfThreads: Real ;
+property predefinedCurveString:String;
+
+property manualCurve:String;
+property overheadOptionString:String;
+property curveOptionString:String;
+property hardwareTypeString:String;
+
+property countCurves:List(String);
+property matrixCurves:List(String);
+property fibonacciCurves:List(String);
+property primeCurves:List(String);
+property sortCurves:List(String);
+property mandelCurves:List(String);
+
+			
+			
+
 main(){
 
-		log ("AT Transformation: Parallel Loop initilized");
-        
-		var repoClasses : Set(Repository) := pcmRepository.rootObjects()[Repository];
+	log ("AT Transformation: Parallel Loop initilized");
+    
+    var resContainerSet : Set(ProcessingResourceSpecification) := pcmResEnv.objects()[ProcessingResourceSpecification];
+	var numberOfReplicas:Integer:= resContainerSet->asList()->at(1).numberOfReplicas;		
+	numberOfHyperThreadsAvail:=numberOfReplicas;
+	setCurves();
+	var repoClasses : Set(Repository) := pcmRepository.rootObjects()[Repository];
        	var basicComponents : Bag(BasicComponent) := repoClasses.components__Repository[BasicComponent]; 
        	var resourceDemandingSeffs : Bag(ResourceDemandingSEFF) := basicComponents.serviceEffectSpecifications__BasicComponent[ResourceDemandingSEFF];
       	var loopActions:Bag(LoopAction) := resourceDemandingSeffs.steps_Behaviour[LoopAction];
       	var loops=resourceDemandingSeffs.allSubobjects()[LoopAction];
-      	
+      	//collecting all resource demands in order to access the processing types later
       	resourceDemandingSeffs->forEach(seff){
 			seff.allSubobjects()->forEach(action){
 				
@@ -45,7 +79,7 @@ main(){
 				};
 			};
 		};
-		
+	//starts the mapping	
       	resourceDemandingSeffs ->map loopActionToForkAction();
 }
 
@@ -58,12 +92,62 @@ mapping inout ResourceDemandingSEFF::loopActionToForkAction(){
 	self.steps_Behaviour := replaceLoopActionWithForkAction(self.steps_Behaviour);
 }
 
+helper setCurves(){
+			countCurves->add("0.4348+0");
+			countCurves->add("-0.171x+0.572");
+			countCurves->add("-0.0038x+0.230");
+			//---VIRTUAL----
+			countCurves->add("0.374x+0");
+			countCurves->add("-0.052x+0.445");
+			countCurves->add("0.0002x+0.336");
+			
+			matrixCurves->add("0.412x+0");
+			matrixCurves->add("0.043x+0.357");
+			matrixCurves->add("-0.0148x+0.472");
+			//---VIRTUAL----
+			matrixCurves->add("0.334x+0");
+			matrixCurves->add("0.052x+0.332");
+			matrixCurves->add("0.0006x+0.373");
+			
+			fibonacciCurves->add("0.452x+0");
+			fibonacciCurves->add("0.026x+0.417");
+			fibonacciCurves->add("0.00341x+0.456");
+			//---VIRTUAL----
+			fibonacciCurves->add("0.357x+0");
+			fibonacciCurves->add("0.0096x+0.359");
+			fibonacciCurves->add("0.0322x+0.280");
+			
+			primeCurves->add("0.449x+0");
+			primeCurves->add("0.096x+0.333");
+			primeCurves->add("0.0014x+0.536");
+			//---VIRTUAL----
+			primeCurves->add("0.449x+0");
+			primeCurves->add("0.096x+0.333");
+			primeCurves->add("0.0014x+0.536");
+			
+			sortCurves->add("0.407x+0");
+			sortCurves->add("0.151x+0.252");
+			sortCurves->add("-0.0129x+0.573");
+			//---VIRTUAL----
+			sortCurves->add("0.241x+0");
+			sortCurves->add("0.148x+0.095");
+			sortCurves->add("0.018x+0.404");
+			
+			mandelCurves->add("0.458x+0");
+			mandelCurves->add("0.314x+0.206");
+			mandelCurves->add("0.0094x+0.791");
+			//---VIRTUAL----
+			mandelCurves->add("0.349x+0");
+			mandelCurves->add("0.183x+0.184");
+			mandelCurves->add("0.0087x+0.532");
+}
 
 /**
-replace each loopaAction with a ForkAction
-other Actions stays the same
-//TODO set predecessor/successor of our new forkAction ?
+* Replaces all annotated LoopActions with ForkActions
+* @param oldStepsSet: a set containing all AbstractActions from the SEFF diagram
+* @returns a modified set after the transformation
 */
+
 helper replaceLoopActionWithForkAction(oldStepsSet:Set(AbstractAction)):Set(AbstractAction){
 
 	var modifiedStepsSet: Set(AbstractAction);
@@ -76,9 +160,29 @@ helper replaceLoopActionWithForkAction(oldStepsSet:Set(AbstractAction)):Set(Abst
 				log("has applyed stereotype **",hasAppliedStereotype(action.oclAsType(LoopAction),PARALLEL_LOOP_ACTION_STEREOTYPE));
 				log("has applyed profile **",isProfileApplied(action.oclAsType(EObject),PARALLEL_LOOP_ACTION_PROFILE));
 				log("Found loopAction replacing it with ForkAction...",action.entityName);
-				
+				//getting the parameters from the emf stereotype
 				var threadPoolSize : Real := getDoubleTaggedValue(action, THREAD_POOL_SIZE, PARALLEL_LOOP_ACTION_STEREOTYPE);
-				var overhead : String := getStringTaggedValue(action,OVERHEAD,PARALLEL_LOOP_ACTION_STEREOTYPE);
+				var overhead : String := getStringTaggedValue(action,"CustomOverhead",PARALLEL_LOOP_ACTION_STEREOTYPE);
+				
+				numberOfCoresUsed:=threadPoolSize;
+				
+				var overheadOption := getTaggedValue(action,"PerformanceOverheadModel",PARALLEL_LOOP_ACTION_STEREOTYPE);
+				overheadOptionString:=overheadOption->toString()->asList()->at(1);
+				
+				var customOverhead := getStringTaggedValue(action,"CustomOverhead",PARALLEL_LOOP_ACTION_STEREOTYPE);
+				
+				
+				manualCurve := getStringTaggedValue(action,"CustomPerformanceCurve",PARALLEL_LOOP_ACTION_STEREOTYPE);
+				
+				var predefinedCurve  := getTaggedValue(action,"PredefinedPerformanceCurve",PARALLEL_LOOP_ACTION_STEREOTYPE);
+				predefinedCurveString:=predefinedCurve->toString()->asList()->at(1);
+				
+				var hardwareType  := getTaggedValue(action,"typeOfHardware",PARALLEL_LOOP_ACTION_STEREOTYPE);
+				hardwareTypeString:=hardwareType->toString()->asList()->at(1);
+				
+				log(hardwareTypeString);
+				
+				
 				action := new ForkAction(action.oclAsType(LoopAction),threadPoolSize,overhead,false);
 			}
 		};
@@ -90,54 +194,59 @@ helper replaceLoopActionWithForkAction(oldStepsSet:Set(AbstractAction)):Set(Abst
 }
 
 /**
-TODO Problem with succesor/predecessor if two newly created Forked actions are behind each other ?
+* Creates the new ForkAction, innerTrigger is used to annotate nested fork actions
+* @param aLoop: The loop action to be transformed
+* @param threadPoolSize: the thread pool size variable from the profile
+* @paramov overhead: the overhead size variable from the profile
+* @param innerTrigger: a boolean variable set to true if the loop that is transformed is nested in another one, i.e. inner loop
 */
-constructor ForkAction::ForkAction(aLoop: PCMSEFF::LoopAction,threadPoolSize : Real,overhead:String, innerTrigger: Boolean) {
 
+constructor ForkAction::ForkAction(aLoop: PCMSEFF::LoopAction,threadPoolSize : Real,overhead:String, innerTrigger: Boolean) {
        log ("create fork action for loop" + aLoop.entityName);
-       
        if(not innerTrigger){
-	   		predecessor_AbstractAction := aLoop.predecessor_AbstractAction;
+	   	predecessor_AbstractAction := aLoop.predecessor_AbstractAction;
        		successor_AbstractAction := aLoop.successor_AbstractAction;
-	   }endif;
-	   
-		// pass result~ForkAction bcs we have to set it in the forkAction_SynchronisationPoint Attribute of the SynchronisationPoint 
+	}endif; 
+	// pass result~ForkAction bcs we have to set it in the forkAction_SynchronisationPoint Attribute of the SynchronisationPoint 
        synchronisingBehaviours_ForkAction := new SynchronisationPoint(aLoop,result,threadPoolSize,overhead);
 
 }
 
-
+/**
+* Creates the new synchronization point
+* @param aLoop: The loop action to be transformed
+* @param threadPoolSize: the thread pool size variable from the profile
+* @param overhead: the overhead size variable from the profile
+* @param aFork: the fork action for which the synchronization point is created
+*/
 constructor SynchronisationPoint::SynchronisationPoint(aLoop : PCMSEFF::LoopAction,aFork : PCMSEFF::ForkAction,threadPoolSize : Real,overhead:String){
-      
        log ("create synchronisation point for loop" + aLoop.entityName);
-
        forkAction_SynchronisationPoint := aFork;
-       
-		//pass result~SynchronisationPoint bcs we have to set it in the synchronisationPoint_ForkedBehaviour Attribute 
-		//of each ForkedBehaviour
+	//pass result~SynchronisationPoint bcs we have to set it in the synchronisationPoint_ForkedBehaviour Attribute 
+	//of each ForkedBehaviour
        synchronousForkedBehaviours_SynchronisationPoint := createForkedBehaviorList(aLoop, aFork, result,threadPoolSize,overhead);
  }
  
 constructor PCMRandomVariable::PCMRandomVariable(spec: String){
     specification := spec;
 }
-
+//hardcoded CPU processing type
 constructor ProcessingResourceType::ProcessingResourceType(){
 	id:="_oro4gG3fEdy4YaaT-RYrLQ";
 	entityName:="CPU";
 }
+//gets the cpu processing type
 query getCPUDemand():ParametricResourceDemand{
-	
 	var resource:ParametricResourceDemand;
 	setOfRes->forEach(demand){
 			if(demand.requiredResource_ParametricResourceDemand.entityName="CPU"){
-			    resource:=demand;
-			    
+			    resource:=demand;   
 				break;
 			}	
 	};
 	return resource;
 }
+//gets the hdd processing type
 query getHDDDemand():ParametricResourceDemand{
 
 	var resource:ParametricResourceDemand;
@@ -149,24 +258,172 @@ query getHDDDemand():ParametricResourceDemand{
 	};
 	return resource;
 }
-helper createOverheadAction(overhead:String):InternalAction{
-	    var overhead_action:InternalAction=new InternalAction();
+//creates the overhead action
+helper createOverheadAction(overhead:String,executionOneThread:Real):InternalAction{
+	var overhead_action:InternalAction=new InternalAction();
         overhead_action.entityName:='overhead';
-		var setOfNewResources:Set(ParametricResourceDemand);
-		var resource:ParametricResourceDemand;
-		overhead_action.resourceDemand_Action += new ParametricResourceDemand(getCPUDemand()); 
-		//overhead_action.resourceDemand_Action += new ParametricResourceDemand(getHDDDemand()); 
+	var setOfNewResources:Set(ParametricResourceDemand);
+	var resource:ParametricResourceDemand;
+	overhead_action.resourceDemand_Action += new ParametricResourceDemand(getCPUDemand()); 
+	//overhead_action.resourceDemand_Action += new ParametricResourceDemand(getHDDDemand()); 
 		
-		overhead_action.resourceDemand_Action[ParametricResourceDemand] -> forEach(demand){
-			if(demand.requiredResource_ParametricResourceDemand.entityName="CPU"){
+	overhead_action.resourceDemand_Action[ParametricResourceDemand] -> forEach(demand){
+		if(demand.requiredResource_ParametricResourceDemand.entityName="CPU"){
+			
+			
+			
+			//CUSTOM NAMES !!!!!!!!!!/
+			if(overheadOptionString!="CustomOverhead"){
+			var resContainerSet : Set(ProcessingResourceSpecification) := pcmResEnv.objects()[ProcessingResourceSpecification];
+			
+			var numberOfReplicas:Integer:= resContainerSet->asList()->at(1).numberOfReplicas;
+			
+			numberOfHyperThreadsAvail:=numberOfReplicas;
+			
+			log("Number of replicas: "+numberOfReplicas->toString()->asList()->at(1));
+			log("Number of cores used: "+numberOfCoresUsed.toString());
+			
+			var stageCheck := numberOfCoresUsed / numberOfReplicas ;
+			var indexInteger:Integer;
+			
+			if(stageCheck<=0.5){
+				stageOfThreads:=stageCheck*2;
+				indexInteger:=1;
+			};
+			if(stageCheck>0.5 and stageCheck<=1){
+				stageOfThreads:=stageCheck*2;
+				indexInteger:=2;
+			};
+			if(stageCheck>1){
+				stageOfThreads:=stageCheck*2;
+				indexInteger:=3;
+			};
+			
+
+			if(hardwareTypeString="virtualized"){
+				indexInteger:=indexInteger+3;
+			};
+			
+			if(overheadOptionString="PredefinedPerformanceCurve"){
+			
+			
+				if(predefinedCurveString="matrixMultiplication"){
+					//log(matrixCurves->at(indexInteger));
+					referenceCurve:=matrixCurves->at(indexInteger);
+				};
+				if(predefinedCurveString="calculatePrimes"){
+					//log(matrixCurves->at(indexInteger));
+					referenceCurve:=primeCurves->at(indexInteger);
+				};
+				if(predefinedCurveString="sortArray"){
+					//log(sortCurves->at(indexInteger));	
+					referenceCurve:=sortCurves->at(indexInteger);
+				};
+				if(predefinedCurveString="countNumbers"){
+					//log(countCurves->at(indexInteger));
+					referenceCurve:=countCurves->at(indexInteger);
+				};
+				if(predefinedCurveString="fibonacci"){
+					//log(fibonacciCurves->at(indexInteger));
+				referenceCurve:=fibonacciCurves->at(indexInteger);
+				};
+				if(predefinedCurveString="mandelbrot"){
+				//log(mandelCurves->at(indexInteger));
+					referenceCurve:=mandelCurves->at(indexInteger);
+				};
+			
+			};
+			
+			if(overheadOptionString="CustomPerformanceCurve"){
+				referenceCurve:=manualCurve;
+			};
+			
+			
+			
+			var predictedLinearSpeedUp :Real := executionOneThread / numberOfCoresUsed;
+			
+			if(stageCheck>1){
+			    log("3rd sector");
+				predictedLinearSpeedUp:=executionOneThread / numberOfReplicas;
+
+			};
+			
+			var before:String := referenceCurve->substringBefore("x")->asList()->at(1);
+			var after:String := referenceCurve->substringAfter("+")->asList()->at(1);
+			
+			
+			
+			var temp : Real := before->toReal()->asList()->at(1)*stageOfThreads+after->toReal()->asList()->at(1);
+
+			var temp1 : Real := temp * numberOfHyperThreadsAvail;
+			
+			log("Curve:" + referenceCurve);
+			log("x="+stageOfThreads->toString()->asList()->at(1));
+			log("predicted speedup =  "+predictedLinearSpeedUp->toString()->asList()->at(1));
+			log("temp=curve(x)="+temp.toString()->asList()->at(1));
+			log("temp1=temp*hyperThreads="+temp1.toString()->asList()->at(1));
+			
+			/* currently not used
+			var temp2: Real:=0;
+			
+			if (stageOfThreads = 1){
+			temp2 := (numberOfHyperThreadsAvail/2) - temp1;
+			};
+			if (stageOfThreads = 2){
+			temp2 := numberOfHyperThreadsAvail - temp1;
+			};
+			if (stageOfThreads = 3)
+			{
+			temp2 := (numberOfHyperThreadsAvail/2)*3 - temp1;
+			};
+			*/
+			
+			//log("temp1= "+temp1->toString()->asList()->at(1));
+			//log("temp2= "+temp2->toString()->asList()->at(1));		
+	
+			var correctedSpeedUp : Real := executionOneThread / temp1;
+			log("correctedSpeedUp = executionOneThread / temp1 = "+correctedSpeedUp.toString());
+			
+			var overheadNew : Real := predictedLinearSpeedUp - correctedSpeedUp;
+			
+			if(overheadNew<0){
+				overheadNew := overheadNew * (-1);	
+			};
+			
+			
+			var overheadString : String := overheadNew ->toString()->asList()->at(1) ;
+			
+			if(stageCheck>1){
+			    //log("3rd sector");
+				overheadString:=overheadString+"*"+numberOfHyperThreadsAvail.toString()+"/"+numberOfCoresUsed.toString();
+			};
+
+			log("final overhead = predictedLinearSpeedUp - correctedSpeedUp =" + overheadString);
+
+
+			
+			
+			//var string:String:=executionOneThread->toString()->asList()->at(1);
+			//var real:Real:=executionOneThread
+			
+			demand.specification_ParametericResourceDemand.specification:=overheadString;
+			//demand.specification_ParametericResourceDemand.specification:=overhead;
+			};
+			
+			if(overheadOptionString="CustomOverhead"){
 				demand.specification_ParametericResourceDemand.specification:=overhead;
 			};
+			if(overheadOptionString="None"){
+				demand.specification_ParametericResourceDemand.specification:="0";
+			};
+		
 		};
+	};
 
        return overhead_action;
 }
 
-
+//gets the first action after the start action of a loop
 helper getFirstActionAfterStart(aLoop:LoopAction):AbstractAction{
 	   var store:AbstractAction;
 	   aLoop.bodyBehaviour_Loop.steps_Behaviour[AbstractAction] -> forEach(action){
@@ -177,7 +434,12 @@ helper getFirstActionAfterStart(aLoop:LoopAction):AbstractAction{
 	   store:=store.successor_AbstractAction;
 	   return store;
 }
-
+/**
+* Converts the existing actions into new actions with adjusted workloads
+* @param action: the action being converted
+* @param threadPoolSize: the thread pool size variable from the profile
+* @param iterationCount: the number of iterations of the given loop
+*/
 helper convertActions(action:AbstractAction, threadPoolSize:Real, iterationCount:String):AbstractAction{
 	
 	switch {
@@ -186,7 +448,15 @@ helper convertActions(action:AbstractAction, threadPoolSize:Real, iterationCount
        			
        			tempAction.oclAsType(InternalAction).resourceDemand_Action[ParametricResourceDemand] -> forEach(demand){
        				var temp:PCMRandomVariable:=demand.specification_ParametericResourceDemand;
-       				temp.specification := "(" + demand.specification_ParametericResourceDemand.specification+  "*"+ iterationCount.toString() +")" + "/"+threadPoolSize.toString();
+       				
+       				var exec:String := demand.specification_ParametericResourceDemand.specification;
+       				executionOneThread:=exec->toReal()->asList()->at(1);
+       				
+       				var threads:Real:=threadPoolSize;
+       				log(threads->toString()->asList()->at(1)+"  "+numberOfHyperThreadsAvail->toString()->asList()->at(1));
+       				
+       				
+       				temp.specification := "(" + demand.specification_ParametericResourceDemand.specification+  "*"+ iterationCount.toString() +")/" + threadPoolSize.toString();
                  };
                  return tempAction;
         };
@@ -214,16 +484,23 @@ helper convertActions(action:AbstractAction, threadPoolSize:Real, iterationCount
 		
 	};
 }
-
+//takes the ordered list and sets the predecessors and successors
 helper setSuccessorAndPredecessor(list:List(AbstractAction)):List(AbstractAction){
-	var count:=0;
+    var count:=0;
     while(count<=list->size()-1){
      	list->at(count).successor_AbstractAction:=list->at(count+1);
        	count:=count+1;
     };
     return list;
 }
-
+/**
+* Creates a new forked behaviour and populates it with actions
+* @param aLoop: The loop action to be transformed
+* @param threadPoolSize: the thread pool size variable from the profile
+* @param overhead: the overhead size variable from the profile
+* @param aFork: the newly created fork action
+* @param aFork: the newly created synchronization point
+*/
 constructor ForkedBehaviour::ForkedBehaviour(aLoop : LoopAction,aFork : ForkAction, aSyncPoint : SynchronisationPoint,threadPoolSize : Real, overhead:String) {
 	
         log ("create forked behavour for loop" + aLoop.entityName);
@@ -235,11 +512,11 @@ constructor ForkedBehaviour::ForkedBehaviour(aLoop : LoopAction,aFork : ForkActi
         var stop : StopAction = new StopAction();
         stop.entityName:="stop";
        	
-	    var store:=getFirstActionAfterStart(aLoop);
-		var list:List(AbstractAction);
-		list+=start;
-		var iterationCount:=aLoop.oclAsType(LoopAction).iterationCount_LoopAction.specification;
-		var fork_action:AbstractAction;
+	var store:=getFirstActionAfterStart(aLoop);
+	var list:List(AbstractAction);
+	list+=start;
+	var iterationCount:=aLoop.oclAsType(LoopAction).iterationCount_LoopAction.specification;
+	var fork_action:AbstractAction;
         var action:AbstractAction;
         var setOfResources:Set(ParametricResourceDemand);
         while(not store.oclIsTypeOf(StopAction)){
@@ -248,7 +525,7 @@ constructor ForkedBehaviour::ForkedBehaviour(aLoop : LoopAction,aFork : ForkActi
        		store:=store.successor_AbstractAction;
        };
        
-       list+=createOverheadAction(overhead);
+       list+=createOverheadAction(overhead,executionOneThread);
        list+=stop;
        list := setSuccessorAndPredecessor(list);
      
@@ -260,16 +537,9 @@ constructor StartAction::StartAction(){}
 constructor LoopAction::LoopAction(){}
 constructor StopAction::StopAction(){}
 constructor InternalAction::InternalAction(){}
-
 constructor AbstractAction::AbstractAction(){}
 
 
-/**
-//TODO What if an Internal Action has 
-- infrasructureCall_Action ?
-- resourceCall_Action ?
-- internalFailureOccurenceDescriptions_InternalAction ?
-*/
 constructor InternalAction::InternalAction(oldInternalAction : InternalAction,start:StartAction,stop:StopAction ){
 		entityName:= oldInternalAction.entityName;
 		predecessor_AbstractAction := start;
@@ -322,7 +592,7 @@ constructor PCMRandomVariable::PCMRandomVariable(oldDemand:ParametricResourceDem
 			specification := oldDemand.specification_ParametericResourceDemand.specification + "/" + threadPoolSize.toString();
 			
 }
-
+//creates the required number of forked behaviours
 helper createForkedBehaviorList(aLoop : LoopAction,aFork : ForkAction, aSyncPoint : SynchronisationPoint,threadPoolSize : Real,overhead:String) : Set(ForkedBehaviour) {
 
 			 log("+++ ThradPoolSize",threadPoolSize);

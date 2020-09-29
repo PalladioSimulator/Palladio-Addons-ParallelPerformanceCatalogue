@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xmi:XMI xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:emfprofile="http://www.modelversioning.org/emfprofile/1.1" xmlns:notation="http://www.eclipse.org/gmf/runtime/1.0.2/notation">
+<xmi:XMI xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:emfprofile="http://www.modelversioning.org/emfprofile/1.1" xmlns:notation="http://www.eclipse.org/gmf/runtime/1.0.3/notation">
   <emfprofile:Profile xmi:id="__Rfb8I8TEeiqZYKcl2jPCQ" name="ForkJoinProfile" nsURI="org.palladiosimulator.parallelcatalogues.catalog.profiles.ForkJoin" nsPrefix="org.palladiosimulator.parallelcatalogue.catalog.profiles">
     <eAnnotations xmi:type="ecore:EAnnotation" xmi:id="_sqxssHzaEemMye9W_jd5zA" source="org.palladiosimulator.architecturaltemplate">
       <details xmi:type="ecore:EStringToStringMapEntry" xmi:id="_w2VHIHzaEemMye9W_jd5zA" key="AT" value="platform:/plugin/org.palladiosimulator.parallelcatalogue.catalog/ParallelPerformanceCatalogue.architecturaltemplates#_W7ANkHzaEemMye9W_jd5zA"/>
@@ -78,7 +78,7 @@
       </children>
       <styles xmi:type="notation:DescriptionStyle" xmi:id="_41YXEb5yEemavoM-XDNPKQ"/>
       <styles xmi:type="notation:FontStyle" xmi:id="_41YXEr5yEemavoM-XDNPKQ" fontName="Segoe UI"/>
-      <layoutConstraint xmi:type="notation:Bounds" xmi:id="_41YXE75yEemavoM-XDNPKQ" x="516" y="240"/>
+      <layoutConstraint xmi:type="notation:Bounds" xmi:id="_41YXE75yEemavoM-XDNPKQ" x="516" y="240" width="303"/>
     </children>
     <children xmi:type="notation:Node" xmi:id="_7sUH8L5yEemavoM-XDNPKQ" type="2002">
       <eAnnotations xmi:type="ecore:EAnnotation" xmi:id="_7sUvAL5yEemavoM-XDNPKQ" source="Shortcut">
