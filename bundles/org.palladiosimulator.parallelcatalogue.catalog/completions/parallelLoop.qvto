@@ -15,8 +15,6 @@ modeltype PCM_RESOURCE uses pcm::resourcetype;
 modeltype STOEX uses stoex;
 modeltype PROBFUNC uses probfunction;
 
-
-//Inout model is defined and passed from AtCatalog-> role XYZ -> qvto ->pcm blackboard-> pcm file Extension
 transformation ParallelLoop(inout pcmRepository : PCM_Repository, inout pcmResEnv: PCM_ResEnv);
 
 property setOfRes:Set(ParametricResourceDemand);
@@ -27,9 +25,6 @@ property THREAD_POOL_SIZE : String = "threadPoolSize";//<- change this if steroe
 property numberOfWorkerThreads : Integer;
 property OVERHEAD : String = "overhead";
 property amountOfOverhead : Real; //TODO change Attributes in emfprofile to real
-
-
-
 
 property NUMBER_OF_HYPER_THREADS_AVAIL : String = "numberOfHyperThreadsAvail";
 property REFEREMCE_CURVE : String = "referenceCurve";
@@ -52,16 +47,13 @@ property matrixCurves:List(String);
 property fibonacciCurves:List(String);
 property primeCurves:List(String);
 property sortCurves:List(String);
-property mandelCurves:List(String);
-
-			
-			
+property mandelCurves:List(String);			
 
 main(){
 
 	log ("AT Transformation: Parallel Loop initilized");
     
-    var resContainerSet : Set(ProcessingResourceSpecification) := pcmResEnv.objects()[ProcessingResourceSpecification];
+   	var resContainerSet : Set(ProcessingResourceSpecification) := pcmResEnv.objects()[ProcessingResourceSpecification];
 	var numberOfReplicas:Integer:= resContainerSet->asList()->at(1).numberOfReplicas;		
 	numberOfHyperThreadsAvail:=numberOfReplicas;
 	setCurves();
@@ -93,53 +85,53 @@ mapping inout ResourceDemandingSEFF::loopActionToForkAction(){
 }
 
 helper setCurves(){
-			countCurves->add("0.4348+0");
-			countCurves->add("-0.171x+0.572");
-			countCurves->add("-0.0038x+0.230");
-			//---VIRTUAL----
-			countCurves->add("0.374x+0");
-			countCurves->add("-0.052x+0.445");
-			countCurves->add("0.0002x+0.336");
+		countCurves->add("0.4348+0");
+		countCurves->add("-0.171x+0.572");
+		countCurves->add("-0.0038x+0.230");
+		//---VIRTUAL----
+		countCurves->add("0.374x+0");
+		countCurves->add("-0.052x+0.445");
+		countCurves->add("0.0002x+0.336");
 			
-			matrixCurves->add("0.412x+0");
-			matrixCurves->add("0.043x+0.357");
-			matrixCurves->add("-0.0148x+0.472");
-			//---VIRTUAL----
-			matrixCurves->add("0.334x+0");
-			matrixCurves->add("0.052x+0.332");
-			matrixCurves->add("0.0006x+0.373");
+		matrixCurves->add("0.412x+0");
+		matrixCurves->add("0.043x+0.357");
+		matrixCurves->add("-0.0148x+0.472");
+		//---VIRTUAL----
+		matrixCurves->add("0.334x+0");
+		matrixCurves->add("0.052x+0.332");
+		matrixCurves->add("0.0006x+0.373");
 			
-			fibonacciCurves->add("0.452x+0");
-			fibonacciCurves->add("0.026x+0.417");
-			fibonacciCurves->add("0.00341x+0.456");
-			//---VIRTUAL----
-			fibonacciCurves->add("0.357x+0");
-			fibonacciCurves->add("0.0096x+0.359");
-			fibonacciCurves->add("0.0322x+0.280");
+		fibonacciCurves->add("0.452x+0");
+		fibonacciCurves->add("0.026x+0.417");
+		fibonacciCurves->add("0.00341x+0.456");
+		//---VIRTUAL----
+		fibonacciCurves->add("0.357x+0");
+		fibonacciCurves->add("0.0096x+0.359");
+		fibonacciCurves->add("0.0322x+0.280");
 			
-			primeCurves->add("0.449x+0");
-			primeCurves->add("0.096x+0.333");
-			primeCurves->add("0.0014x+0.536");
-			//---VIRTUAL----
-			primeCurves->add("0.449x+0");
-			primeCurves->add("0.096x+0.333");
-			primeCurves->add("0.0014x+0.536");
+		primeCurves->add("0.449x+0");
+		primeCurves->add("0.096x+0.333");
+		primeCurves->add("0.0014x+0.536");
+		//---VIRTUAL----
+		primeCurves->add("0.449x+0");
+		primeCurves->add("0.096x+0.333");
+		primeCurves->add("0.0014x+0.536");
 			
-			sortCurves->add("0.407x+0");
-			sortCurves->add("0.151x+0.252");
-			sortCurves->add("-0.0129x+0.573");
-			//---VIRTUAL----
-			sortCurves->add("0.241x+0");
-			sortCurves->add("0.148x+0.095");
-			sortCurves->add("0.018x+0.404");
+		sortCurves->add("0.407x+0");
+		sortCurves->add("0.151x+0.252");
+		sortCurves->add("-0.0129x+0.573");
+		//---VIRTUAL----
+		sortCurves->add("0.241x+0");
+		sortCurves->add("0.148x+0.095");
+		sortCurves->add("0.018x+0.404");
 			
-			mandelCurves->add("0.458x+0");
-			mandelCurves->add("0.314x+0.206");
-			mandelCurves->add("0.0094x+0.791");
-			//---VIRTUAL----
-			mandelCurves->add("0.349x+0");
-			mandelCurves->add("0.183x+0.184");
-			mandelCurves->add("0.0087x+0.532");
+		mandelCurves->add("0.458x+0");
+		mandelCurves->add("0.314x+0.206");
+		mandelCurves->add("0.0094x+0.791");
+		//---VIRTUAL----
+		mandelCurves->add("0.349x+0");
+		mandelCurves->add("0.183x+0.184");
+		mandelCurves->add("0.0087x+0.532");
 }
 
 /**
@@ -207,8 +199,7 @@ constructor ForkAction::ForkAction(aLoop: PCMSEFF::LoopAction,threadPoolSize : R
 	   	predecessor_AbstractAction := aLoop.predecessor_AbstractAction;
        		successor_AbstractAction := aLoop.successor_AbstractAction;
 	}endif; 
-	// pass result~ForkAction bcs we have to set it in the forkAction_SynchronisationPoint Attribute of the SynchronisationPoint 
-       synchronisingBehaviours_ForkAction := new SynchronisationPoint(aLoop,result,threadPoolSize,overhead);
+	synchronisingBehaviours_ForkAction := new SynchronisationPoint(aLoop,result,threadPoolSize,overhead);
 
 }
 
@@ -222,8 +213,6 @@ constructor ForkAction::ForkAction(aLoop: PCMSEFF::LoopAction,threadPoolSize : R
 constructor SynchronisationPoint::SynchronisationPoint(aLoop : PCMSEFF::LoopAction,aFork : PCMSEFF::ForkAction,threadPoolSize : Real,overhead:String){
        log ("create synchronisation point for loop" + aLoop.entityName);
        forkAction_SynchronisationPoint := aFork;
-	//pass result~SynchronisationPoint bcs we have to set it in the synchronisationPoint_ForkedBehaviour Attribute 
-	//of each ForkedBehaviour
        synchronousForkedBehaviours_SynchronisationPoint := createForkedBehaviorList(aLoop, aFork, result,threadPoolSize,overhead);
  }
  
@@ -269,11 +258,8 @@ helper createOverheadAction(overhead:String,executionOneThread:Real):InternalAct
 		
 	overhead_action.resourceDemand_Action[ParametricResourceDemand] -> forEach(demand){
 		if(demand.requiredResource_ParametricResourceDemand.entityName="CPU"){
-			
-			
-			
-			//CUSTOM NAMES !!!!!!!!!!/
-			if(overheadOptionString!="CustomOverhead"){
+
+		if(overheadOptionString!="CustomOverhead"){
 			var resContainerSet : Set(ProcessingResourceSpecification) := pcmResEnv.objects()[ProcessingResourceSpecification];
 			
 			var numberOfReplicas:Integer:= resContainerSet->asList()->at(1).numberOfReplicas;
@@ -308,27 +294,21 @@ helper createOverheadAction(overhead:String,executionOneThread:Real):InternalAct
 			
 			
 				if(predefinedCurveString="matrixMultiplication"){
-					//log(matrixCurves->at(indexInteger));
 					referenceCurve:=matrixCurves->at(indexInteger);
 				};
 				if(predefinedCurveString="calculatePrimes"){
-					//log(matrixCurves->at(indexInteger));
 					referenceCurve:=primeCurves->at(indexInteger);
 				};
 				if(predefinedCurveString="sortArray"){
-					//log(sortCurves->at(indexInteger));	
 					referenceCurve:=sortCurves->at(indexInteger);
 				};
 				if(predefinedCurveString="countNumbers"){
-					//log(countCurves->at(indexInteger));
 					referenceCurve:=countCurves->at(indexInteger);
 				};
 				if(predefinedCurveString="fibonacci"){
-					//log(fibonacciCurves->at(indexInteger));
-				referenceCurve:=fibonacciCurves->at(indexInteger);
+					referenceCurve:=fibonacciCurves->at(indexInteger);
 				};
 				if(predefinedCurveString="mandelbrot"){
-				//log(mandelCurves->at(indexInteger));
 					referenceCurve:=mandelCurves->at(indexInteger);
 				};
 			
@@ -343,7 +323,6 @@ helper createOverheadAction(overhead:String,executionOneThread:Real):InternalAct
 			var predictedLinearSpeedUp :Real := executionOneThread / numberOfCoresUsed;
 			
 			if(stageCheck>1){
-			    log("3rd sector");
 				predictedLinearSpeedUp:=executionOneThread / numberOfReplicas;
 
 			};
@@ -351,10 +330,8 @@ helper createOverheadAction(overhead:String,executionOneThread:Real):InternalAct
 			var before:String := referenceCurve->substringBefore("x")->asList()->at(1);
 			var after:String := referenceCurve->substringAfter("+")->asList()->at(1);
 			
-			
-			
-			var temp : Real := before->toReal()->asList()->at(1)*stageOfThreads+after->toReal()->asList()->at(1);
 
+			var temp : Real := before->toReal()->asList()->at(1)*stageOfThreads+after->toReal()->asList()->at(1);
 			var temp1 : Real := temp * numberOfHyperThreadsAvail;
 			
 			log("Curve:" + referenceCurve);
@@ -362,24 +339,7 @@ helper createOverheadAction(overhead:String,executionOneThread:Real):InternalAct
 			log("predicted speedup =  "+predictedLinearSpeedUp->toString()->asList()->at(1));
 			log("temp=curve(x)="+temp.toString()->asList()->at(1));
 			log("temp1=temp*hyperThreads="+temp1.toString()->asList()->at(1));
-			
-			/* currently not used
-			var temp2: Real:=0;
-			
-			if (stageOfThreads = 1){
-			temp2 := (numberOfHyperThreadsAvail/2) - temp1;
-			};
-			if (stageOfThreads = 2){
-			temp2 := numberOfHyperThreadsAvail - temp1;
-			};
-			if (stageOfThreads = 3)
-			{
-			temp2 := (numberOfHyperThreadsAvail/2)*3 - temp1;
-			};
-			*/
-			
-			//log("temp1= "+temp1->toString()->asList()->at(1));
-			//log("temp2= "+temp2->toString()->asList()->at(1));		
+					
 	
 			var correctedSpeedUp : Real := executionOneThread / temp1;
 			log("correctedSpeedUp = executionOneThread / temp1 = "+correctedSpeedUp.toString());
@@ -389,33 +349,26 @@ helper createOverheadAction(overhead:String,executionOneThread:Real):InternalAct
 			if(overheadNew<0){
 				overheadNew := overheadNew * (-1);	
 			};
-			
-			
+				
 			var overheadString : String := overheadNew ->toString()->asList()->at(1) ;
 			
 			if(stageCheck>1){
-			    //log("3rd sector");
 				overheadString:=overheadString+"*"+numberOfHyperThreadsAvail.toString()+"/"+numberOfCoresUsed.toString();
 			};
 
 			log("final overhead = predictedLinearSpeedUp - correctedSpeedUp =" + overheadString);
 
-
-			
-			
-			//var string:String:=executionOneThread->toString()->asList()->at(1);
-			//var real:Real:=executionOneThread
 			
 			demand.specification_ParametericResourceDemand.specification:=overheadString;
-			//demand.specification_ParametericResourceDemand.specification:=overhead;
-			};
 			
-			if(overheadOptionString="CustomOverhead"){
+		};
+			
+		if(overheadOptionString="CustomOverhead"){
 				demand.specification_ParametericResourceDemand.specification:=overhead;
-			};
-			if(overheadOptionString="None"){
+		};
+		if(overheadOptionString="None"){
 				demand.specification_ParametericResourceDemand.specification:="0";
-			};
+		};
 		
 		};
 	};
@@ -595,7 +548,6 @@ constructor PCMRandomVariable::PCMRandomVariable(oldDemand:ParametricResourceDem
 //creates the required number of forked behaviours
 helper createForkedBehaviorList(aLoop : LoopAction,aFork : ForkAction, aSyncPoint : SynchronisationPoint,threadPoolSize : Real,overhead:String) : Set(ForkedBehaviour) {
 
-			 log("+++ ThradPoolSize",threadPoolSize);
              
              var counter : Real := 0;
 
