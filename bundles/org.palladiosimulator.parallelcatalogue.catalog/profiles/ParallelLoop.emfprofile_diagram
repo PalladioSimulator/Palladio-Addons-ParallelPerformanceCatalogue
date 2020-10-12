@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xmi:XMI xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:emfprofile="http://www.modelversioning.org/emfprofile/1.1" xmlns:notation="http://www.eclipse.org/gmf/runtime/1.0.2/notation">
+<xmi:XMI xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:emfprofile="http://www.modelversioning.org/emfprofile/1.1" xmlns:notation="http://www.eclipse.org/gmf/runtime/1.0.3/notation">
   <emfprofile:Profile xmi:id="_0oWXUI2EEeiSrKmoJuugdQ" name="ParallelLoopProfile" nsURI="org.palladiosimulator.parallelcatalogues.catalog.profiles.ParallelLoop" nsPrefix="org.palladiosimulator.parallelcatalogue.catalog.profiles">
     <eAnnotations xmi:type="ecore:EAnnotation" xmi:id="_RrJbUI2JEeiSrKmoJuugdQ" source="org.palladiosimulator.architecturaltemplate">
       <details xmi:type="ecore:EStringToStringMapEntry" xmi:id="_SGYl0I2JEeiSrKmoJuugdQ" key="AT" value="platform:/plugin/org.palladiosimulator.parallelcatalogue.catalog/ParallelPerformanceCatalogue.architecturaltemplates#_-QRXAI2IEeiSrKmoJuugdQ"/>
@@ -13,18 +13,39 @@
     </eClassifiers>
     <eClassifiers xmi:type="emfprofile:Stereotype" xmi:id="_Hu00oI8UEeiqZYKcl2jPCQ" name="ParallelLoopLoopAction">
       <eSuperTypes xmi:type="ecore:EClass" href="http://www.modelversioning.org/emfprofile/application/1.1#//StereotypeApplication"/>
-      <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="_THCDAI8UEeiqZYKcl2jPCQ" name="repetition">
-        <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
-      </eStructuralFeatures>
       <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="_U2U2YI8UEeiqZYKcl2jPCQ" name="threadPoolSize" defaultValueLiteral="1">
         <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EDouble"/>
       </eStructuralFeatures>
-      <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="_WZcO8I8UEeiqZYKcl2jPCQ" name="overhead" defaultValueLiteral="1">
+      <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="_WZcO8I8UEeiqZYKcl2jPCQ" name="CustomOverhead" defaultValueLiteral="1">
         <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       </eStructuralFeatures>
+      <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="_uHKrkNDMEeqmeKdTuW5Cmw" name="PredefinedPerformanceCurve" eType="_e2CD0NDMEeqmeKdTuW5Cmw" defaultValueLiteral="matrixMultiplication"/>
+      <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="_pFangNikEeqyDrRgaxBcCQ" name="CustomPerformanceCurve" defaultValueLiteral="">
+        <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eStructuralFeatures>
+      <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="_LzzAwOBpEeqfRMWiYbLTcg" name="PerformanceOverheadModel" eType="_zuQ1gNikEeqyDrRgaxBcCQ"/>
+      <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="_QhR-EObAEeqWC5BLC4A2Yg" name="typeOfHardware" eType="_MpDvUObAEeqWC5BLC4A2Yg"/>
       <extensions xmi:type="emfprofile:Extension" xmi:id="_Mvt7oI8UEeiqZYKcl2jPCQ">
         <target xmi:type="ecore:EClass" href="http://palladiosimulator.org/PalladioComponentModel/5.2#//seff/LoopAction"/>
       </extensions>
+    </eClassifiers>
+    <eClassifiers xmi:type="ecore:EEnum" xmi:id="_e2CD0NDMEeqmeKdTuW5Cmw" name="curvesEnum">
+      <eLiterals xmi:type="ecore:EEnumLiteral" xmi:id="_jd8qINDMEeqmeKdTuW5Cmw" name="matrixMultiplication"/>
+      <eLiterals xmi:type="ecore:EEnumLiteral" xmi:id="_h5uCYNiPEeqyDrRgaxBcCQ" name="fibonacci"/>
+      <eLiterals xmi:type="ecore:EEnumLiteral" xmi:id="_jRFd8NiPEeqyDrRgaxBcCQ" name="sortArray"/>
+      <eLiterals xmi:type="ecore:EEnumLiteral" xmi:id="_kxuxUNiPEeqyDrRgaxBcCQ" name="mandelbrot"/>
+      <eLiterals xmi:type="ecore:EEnumLiteral" xmi:id="_YgxqINicEeqyDrRgaxBcCQ" name="countNumbers"/>
+      <eLiterals xmi:type="ecore:EEnumLiteral" xmi:id="_E42hIOAXEeqn0PZK8FjghQ" name="calculatePrimes"/>
+    </eClassifiers>
+    <eClassifiers xmi:type="ecore:EEnum" xmi:id="_zuQ1gNikEeqyDrRgaxBcCQ" name="option">
+      <eLiterals xmi:type="ecore:EEnumLiteral" xmi:id="_yySrIOBoEeqfRMWiYbLTcg" name="None"/>
+      <eLiterals xmi:type="ecore:EEnumLiteral" xmi:id="_zzkh8OBoEeqfRMWiYbLTcg" name="CustomOverhead"/>
+      <eLiterals xmi:type="ecore:EEnumLiteral" xmi:id="_1VnjgOBoEeqfRMWiYbLTcg" name="CustomPerformanceCurve"/>
+      <eLiterals xmi:type="ecore:EEnumLiteral" xmi:id="_5FfHgOBoEeqfRMWiYbLTcg" name="PredefinedPerformanceCurve"/>
+    </eClassifiers>
+    <eClassifiers xmi:type="ecore:EEnum" xmi:id="_MpDvUObAEeqWC5BLC4A2Yg" name="typeOfHardware">
+      <eLiterals xmi:type="ecore:EEnumLiteral" xmi:id="_OruxsObAEeqWC5BLC4A2Yg" name="virtualized"/>
+      <eLiterals xmi:type="ecore:EEnumLiteral" xmi:id="_PZRNIObAEeqWC5BLC4A2Yg" name="dedicated"/>
     </eClassifiers>
   </emfprofile:Profile>
   <notation:Diagram xmi:id="_0q-0kI2EEeiSrKmoJuugdQ" type="EMFProfile" element="_0oWXUI2EEeiSrKmoJuugdQ" name="ParallelLoop.emfprofile_diagram" measurementUnit="Pixel">
@@ -44,7 +65,7 @@
       <styles xmi:type="notation:DescriptionStyle" xmi:id="_wUqXwY2IEeiSrKmoJuugdQ"/>
       <styles xmi:type="notation:FontStyle" xmi:id="_wUqXwo2IEeiSrKmoJuugdQ" fontName="Segoe UI"/>
       <element xmi:type="ecore:EClass" href="http://palladiosimulator.org/PalladioComponentModel/5.2#//system/System"/>
-      <layoutConstraint xmi:type="notation:Bounds" xmi:id="_wUqXw42IEeiSrKmoJuugdQ" x="72" y="96"/>
+      <layoutConstraint xmi:type="notation:Bounds" xmi:id="_wUqXw42IEeiSrKmoJuugdQ" x="120" y="84"/>
     </children>
     <children xmi:type="notation:Node" xmi:id="_xODd4I2IEeiSrKmoJuugdQ" type="2006" element="_xOCPwI2IEeiSrKmoJuugdQ">
       <children xmi:type="notation:DecorationNode" xmi:id="_xODd5I2IEeiSrKmoJuugdQ" type="5008"/>
@@ -72,26 +93,101 @@
       <styles xmi:type="notation:DescriptionStyle" xmi:id="_D7RqgY8UEeiqZYKcl2jPCQ"/>
       <styles xmi:type="notation:FontStyle" xmi:id="_D7Rqgo8UEeiqZYKcl2jPCQ" fontName="Segoe UI"/>
       <element xmi:type="ecore:EClass" href="http://palladiosimulator.org/PalladioComponentModel/5.2#//seff/LoopAction"/>
-      <layoutConstraint xmi:type="notation:Bounds" xmi:id="_D7Rqg48UEeiqZYKcl2jPCQ" x="408" y="84"/>
+      <layoutConstraint xmi:type="notation:Bounds" xmi:id="_D7Rqg48UEeiqZYKcl2jPCQ" x="456" y="84" height="51"/>
     </children>
     <children xmi:type="notation:Node" xmi:id="_Hu2p0I8UEeiqZYKcl2jPCQ" type="2006" element="_Hu00oI8UEeiqZYKcl2jPCQ">
       <children xmi:type="notation:DecorationNode" xmi:id="_Hu2p1I8UEeiqZYKcl2jPCQ" type="5008"/>
       <children xmi:type="notation:DecorationNode" xmi:id="_Hu2p1Y8UEeiqZYKcl2jPCQ" type="7008">
-        <children xmi:type="notation:Node" xmi:id="_THCqEI8UEeiqZYKcl2jPCQ" type="3001" element="_THCDAI8UEeiqZYKcl2jPCQ">
-          <layoutConstraint xmi:type="notation:Location" xmi:id="_THCqEY8UEeiqZYKcl2jPCQ"/>
-        </children>
         <children xmi:type="notation:Node" xmi:id="_U2VdcI8UEeiqZYKcl2jPCQ" type="3001" element="_U2U2YI8UEeiqZYKcl2jPCQ">
           <layoutConstraint xmi:type="notation:Location" xmi:id="_U2VdcY8UEeiqZYKcl2jPCQ"/>
         </children>
         <children xmi:type="notation:Node" xmi:id="_WZc2AI8UEeiqZYKcl2jPCQ" type="3001" element="_WZcO8I8UEeiqZYKcl2jPCQ">
           <layoutConstraint xmi:type="notation:Location" xmi:id="_WZc2AY8UEeiqZYKcl2jPCQ"/>
         </children>
+        <children xmi:type="notation:Node" xmi:id="_uHLSoNDMEeqmeKdTuW5Cmw" type="3001" element="_uHKrkNDMEeqmeKdTuW5Cmw">
+          <layoutConstraint xmi:type="notation:Location" xmi:id="_uHLSodDMEeqmeKdTuW5Cmw"/>
+        </children>
+        <children xmi:type="notation:Node" xmi:id="_pFbOkNikEeqyDrRgaxBcCQ" type="3001" element="_pFangNikEeqyDrRgaxBcCQ">
+          <layoutConstraint xmi:type="notation:Location" xmi:id="_pFbOkdikEeqyDrRgaxBcCQ"/>
+        </children>
+        <children xmi:type="notation:Node" xmi:id="_Lz1dAOBpEeqfRMWiYbLTcg" type="3001" element="_LzzAwOBpEeqfRMWiYbLTcg">
+          <layoutConstraint xmi:type="notation:Location" xmi:id="_Lz1dAeBpEeqfRMWiYbLTcg"/>
+        </children>
+        <children xmi:type="notation:Node" xmi:id="_QhTzQObAEeqWC5BLC4A2Yg" type="3001" element="_QhR-EObAEeqWC5BLC4A2Yg">
+          <layoutConstraint xmi:type="notation:Location" xmi:id="_QhTzQebAEeqWC5BLC4A2Yg"/>
+        </children>
         <styles xmi:type="notation:SortingStyle" xmi:id="_Hu2p1o8UEeiqZYKcl2jPCQ"/>
         <styles xmi:type="notation:FilteringStyle" xmi:id="_Hu2p148UEeiqZYKcl2jPCQ"/>
       </children>
       <styles xmi:type="notation:DescriptionStyle" xmi:id="_Hu2p0Y8UEeiqZYKcl2jPCQ"/>
       <styles xmi:type="notation:FontStyle" xmi:id="_Hu2p0o8UEeiqZYKcl2jPCQ" fontName="Segoe UI"/>
-      <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Hu2p048UEeiqZYKcl2jPCQ" x="393" y="249" width="210" height="126"/>
+      <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Hu2p048UEeiqZYKcl2jPCQ" x="393" y="249" width="210" height="162"/>
+    </children>
+    <children xmi:type="notation:Node" xmi:id="_e4F5UNDMEeqmeKdTuW5Cmw" type="2004" element="_e2CD0NDMEeqmeKdTuW5Cmw">
+      <children xmi:type="notation:DecorationNode" xmi:id="_e4GgYNDMEeqmeKdTuW5Cmw" type="5005"/>
+      <children xmi:type="notation:BasicCompartment" xmi:id="_e4GgYdDMEeqmeKdTuW5Cmw" type="7003">
+        <children xmi:type="notation:Node" xmi:id="_jd_GYNDMEeqmeKdTuW5Cmw" type="3003" element="_jd8qINDMEeqmeKdTuW5Cmw">
+          <layoutConstraint xmi:type="notation:Location" xmi:id="_jd_GYdDMEeqmeKdTuW5Cmw"/>
+        </children>
+        <children xmi:type="notation:Node" xmi:id="_h6h6sNiPEeqyDrRgaxBcCQ" type="3003" element="_h5uCYNiPEeqyDrRgaxBcCQ">
+          <layoutConstraint xmi:type="notation:Location" xmi:id="_h6h6sdiPEeqyDrRgaxBcCQ"/>
+        </children>
+        <children xmi:type="notation:Node" xmi:id="_jRGFANiPEeqyDrRgaxBcCQ" type="3003" element="_jRFd8NiPEeqyDrRgaxBcCQ">
+          <layoutConstraint xmi:type="notation:Location" xmi:id="_jRGFAdiPEeqyDrRgaxBcCQ"/>
+        </children>
+        <children xmi:type="notation:Node" xmi:id="_kxvYYNiPEeqyDrRgaxBcCQ" type="3003" element="_kxuxUNiPEeqyDrRgaxBcCQ">
+          <layoutConstraint xmi:type="notation:Location" xmi:id="_kxvYYdiPEeqyDrRgaxBcCQ"/>
+        </children>
+        <children xmi:type="notation:Node" xmi:id="_Yg0GYNicEeqyDrRgaxBcCQ" type="3003" element="_YgxqINicEeqyDrRgaxBcCQ">
+          <layoutConstraint xmi:type="notation:Location" xmi:id="_Yg0GYdicEeqyDrRgaxBcCQ"/>
+        </children>
+        <children xmi:type="notation:Node" xmi:id="_E6sUMOAXEeqn0PZK8FjghQ" type="3003" element="_E42hIOAXEeqn0PZK8FjghQ">
+          <layoutConstraint xmi:type="notation:Location" xmi:id="_E6sUMeAXEeqn0PZK8FjghQ"/>
+        </children>
+        <styles xmi:type="notation:SortingStyle" xmi:id="_e4GgYtDMEeqmeKdTuW5Cmw"/>
+        <styles xmi:type="notation:FilteringStyle" xmi:id="_e4GgY9DMEeqmeKdTuW5Cmw"/>
+      </children>
+      <styles xmi:type="notation:DescriptionStyle" xmi:id="_e4F5UdDMEeqmeKdTuW5Cmw"/>
+      <styles xmi:type="notation:FontStyle" xmi:id="_e4F5UtDMEeqmeKdTuW5Cmw" fontName="Segoe UI"/>
+      <layoutConstraint xmi:type="notation:Bounds" xmi:id="_e4F5U9DMEeqmeKdTuW5Cmw" x="756" y="96"/>
+    </children>
+    <children xmi:type="notation:Node" xmi:id="_zuTRwNikEeqyDrRgaxBcCQ" type="2004" element="_zuQ1gNikEeqyDrRgaxBcCQ">
+      <children xmi:type="notation:DecorationNode" xmi:id="_zuTRxNikEeqyDrRgaxBcCQ" type="5005"/>
+      <children xmi:type="notation:BasicCompartment" xmi:id="_zuTRxdikEeqyDrRgaxBcCQ" type="7003">
+        <children xmi:type="notation:Node" xmi:id="_yy5vIOBoEeqfRMWiYbLTcg" type="3003" element="_yySrIOBoEeqfRMWiYbLTcg">
+          <layoutConstraint xmi:type="notation:Location" xmi:id="_yy5vIeBoEeqfRMWiYbLTcg"/>
+        </children>
+        <children xmi:type="notation:Node" xmi:id="_zzlJAOBoEeqfRMWiYbLTcg" type="3003" element="_zzkh8OBoEeqfRMWiYbLTcg">
+          <layoutConstraint xmi:type="notation:Location" xmi:id="_zzlJAeBoEeqfRMWiYbLTcg"/>
+        </children>
+        <children xmi:type="notation:Node" xmi:id="_1VoKkOBoEeqfRMWiYbLTcg" type="3003" element="_1VnjgOBoEeqfRMWiYbLTcg">
+          <layoutConstraint xmi:type="notation:Location" xmi:id="_1VoKkeBoEeqfRMWiYbLTcg"/>
+        </children>
+        <children xmi:type="notation:Node" xmi:id="_5FfukOBoEeqfRMWiYbLTcg" type="3003" element="_5FfHgOBoEeqfRMWiYbLTcg">
+          <layoutConstraint xmi:type="notation:Location" xmi:id="_5FfukeBoEeqfRMWiYbLTcg"/>
+        </children>
+        <styles xmi:type="notation:SortingStyle" xmi:id="_zuT40NikEeqyDrRgaxBcCQ"/>
+        <styles xmi:type="notation:FilteringStyle" xmi:id="_zuT40dikEeqyDrRgaxBcCQ"/>
+      </children>
+      <styles xmi:type="notation:DescriptionStyle" xmi:id="_zuTRwdikEeqyDrRgaxBcCQ"/>
+      <styles xmi:type="notation:FontStyle" xmi:id="_zuTRwtikEeqyDrRgaxBcCQ" fontName="Segoe UI"/>
+      <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zuTRw9ikEeqyDrRgaxBcCQ" x="744" y="276"/>
+    </children>
+    <children xmi:type="notation:Node" xmi:id="_MpqzUObAEeqWC5BLC4A2Yg" type="2004" element="_MpDvUObAEeqWC5BLC4A2Yg">
+      <children xmi:type="notation:DecorationNode" xmi:id="_MpraYObAEeqWC5BLC4A2Yg" type="5005"/>
+      <children xmi:type="notation:BasicCompartment" xmi:id="_MpraYebAEeqWC5BLC4A2Yg" type="7003">
+        <children xmi:type="notation:Node" xmi:id="_OrzqMObAEeqWC5BLC4A2Yg" type="3003" element="_OruxsObAEeqWC5BLC4A2Yg">
+          <layoutConstraint xmi:type="notation:Location" xmi:id="_OrzqMebAEeqWC5BLC4A2Yg"/>
+        </children>
+        <children xmi:type="notation:Node" xmi:id="_PZR0MObAEeqWC5BLC4A2Yg" type="3003" element="_PZRNIObAEeqWC5BLC4A2Yg">
+          <layoutConstraint xmi:type="notation:Location" xmi:id="_PZR0MebAEeqWC5BLC4A2Yg"/>
+        </children>
+        <styles xmi:type="notation:SortingStyle" xmi:id="_MpraYubAEeqWC5BLC4A2Yg"/>
+        <styles xmi:type="notation:FilteringStyle" xmi:id="_MpraY-bAEeqWC5BLC4A2Yg"/>
+      </children>
+      <styles xmi:type="notation:DescriptionStyle" xmi:id="_MpqzUebAEeqWC5BLC4A2Yg"/>
+      <styles xmi:type="notation:FontStyle" xmi:id="_MpqzUubAEeqWC5BLC4A2Yg" fontName="Segoe UI"/>
+      <layoutConstraint xmi:type="notation:Bounds" xmi:id="_MpqzU-bAEeqWC5BLC4A2Yg" x="732" y="444"/>
     </children>
     <styles xmi:type="notation:DiagramStyle" xmi:id="_0q-0kY2EEeiSrKmoJuugdQ"/>
     <edges xmi:type="notation:Edge" xmi:id="_z5280I2IEeiSrKmoJuugdQ" type="4005" element="_z52VwI2IEeiSrKmoJuugdQ" source="_xODd4I2IEeiSrKmoJuugdQ" target="_wUqXwI2IEeiSrKmoJuugdQ">
@@ -101,7 +197,7 @@
       <styles xmi:type="notation:RoutingStyle" xmi:id="_z5280Y2IEeiSrKmoJuugdQ"/>
       <styles xmi:type="notation:FontStyle" xmi:id="_z5280o2IEeiSrKmoJuugdQ" fontName="Segoe UI"/>
       <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_z528042IEeiSrKmoJuugdQ" points="[1, -5, 2, 110]$[1, -107, 2, 8]"/>
-      <sourceAnchor xmi:type="notation:IdentityAnchor" xmi:id="_z54yAI2IEeiSrKmoJuugdQ" id="(0.16129032258064516,0.13333333333333333)"/>
+      <sourceAnchor xmi:type="notation:IdentityAnchor" xmi:id="_z54yAI2IEeiSrKmoJuugdQ" id="(0.5737704918032787,0.0)"/>
       <targetAnchor xmi:type="notation:IdentityAnchor" xmi:id="_z54yAY2IEeiSrKmoJuugdQ" id="(0.6078431372549019,0.8095238095238095)"/>
     </edges>
     <edges xmi:type="notation:Edge" xmi:id="_Mvvw0I8UEeiqZYKcl2jPCQ" type="4005" element="_Mvt7oI8UEeiqZYKcl2jPCQ" source="_Hu2p0I8UEeiqZYKcl2jPCQ" target="_D7RqgI8UEeiqZYKcl2jPCQ">

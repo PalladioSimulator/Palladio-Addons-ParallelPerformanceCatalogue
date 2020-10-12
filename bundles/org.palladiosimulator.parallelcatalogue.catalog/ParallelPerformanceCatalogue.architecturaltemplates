@@ -7,6 +7,9 @@
         <parameters xsi:type="org.palladiosimulator.architecturaltemplates:PCMBlackboardCompletionParameter">
           <fileExtension xsi:type="org.palladiosimulator.architecturaltemplates:PCMFileExtension" fileExtension="repository"/>
         </parameters>
+        <parameters xsi:type="org.palladiosimulator.architecturaltemplates:PCMBlackboardCompletionParameter">
+          <fileExtension xsi:type="org.palladiosimulator.architecturaltemplates:PCMFileExtension" fileExtension="resourceenvironment"/>
+        </parameters>
       </completion>
     </roles>
     <roles id="_2rEjQI8UEeiqZYKcl2jPCQ" entityName="ParallelLoop Assemmbly Context System">
