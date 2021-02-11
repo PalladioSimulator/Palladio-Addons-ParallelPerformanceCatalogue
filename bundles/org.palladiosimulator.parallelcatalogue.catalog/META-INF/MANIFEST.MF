@@ -22,3 +22,4 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.10.0",
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Bundle-ActivationPolicy: lazy
 Export-Package: org.palladiosimulator.parallelcatalogue.catalog.black
+Automatic-Module-Name: org.palladiosimulator.parallelcatalogue.catalog
