@@ -201,11 +201,6 @@
 		<repository location="https://updatesite.palladio-simulator.com/palladio-thirdparty-cloudscaleusageevolution/nightly/"/>
 	</location>
 	
-	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="false" type="InstallableUnit" refresh="true">
-		<unit id="LIMBO_DLIM.feature.group" version="tbd"/>
-		<repository location="https://updatesite.palladio-simulator.com/palladio-p2mirror-dlim/nightly/"/>
-	</location>
-	
 	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="false" type="InstallableUnit" filter="release" refresh="true">
 		<unit id="org.palladiosimulator.servicelevelobjective.feature.feature.group" version="tbd"/>
 		<repository location="https://updatesite.palladio-simulator.com/palladio-addons-servicelevelobjectives/releases/latest/"/>
@@ -260,12 +255,20 @@
 		<repository location="https://updatesite.palladio-simulator.com/palladio-addons-experimentautomation/nightly/"/>
 	</location>
 	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="false" type="InstallableUnit" filter="nightly" refresh="true">
-			<unit id="com.google.auto.factory-annotations.feature.feature.group" version="1.0.0"/>
-			<repository location="https://updatesite.mdsd.tools/thirdparty-library/nightly"/>
+		<unit id="com.google.auto.factory-annotations.feature.feature.group" version="1.0.0"/>
+		<repository location="https://updatesite.mdsd.tools/thirdparty-library/nightly"/>
 	</location>
 	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="false" type="InstallableUnit" filter="release" refresh="true">
-			<unit id="com.google.auto.factory-annotations.feature.feature.group" version="1.0.0"/>
-			<repository location="https://updatesite.mdsd.tools/thirdparty-library/releases/latest/"/>
+		<unit id="com.google.auto.factory-annotations.feature.feature.group" version="1.0.0"/>
+		<repository location="https://updatesite.mdsd.tools/thirdparty-library/releases/latest/"/>
+	</location>
+	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="false" type="InstallableUnit">
+		<unit id="tools.descartes.dlim.feature.feature.group" version="0.0.0"/>
+		<repository location="https://updatesite.palladio-simulator.com/palladio-thirdparty-limbo/nightly/"/>
+	</location>
+	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
+		<unit id="tools.mdsd.library.emfeditutils.feature.feature.group" version="0.0.0"/>
+		<repository location="https://updatesite.mdsd.tools/library-emfeditutils/releases/latest/"/>
 	</location>
 </locations>
 </target>
